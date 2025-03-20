@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Courses</title>
+    <link rel="stylesheet" href="../styles/dashboard.css" />
+    <link rel="stylesheet" href="../styles/modal.css" />
+  </head>
+  <body>
+    <div class="dashboard">
+      <!-- Sidebar -->
+      <!-- <aside class="sidebar">
+        <h2>Manage Courses</h2>
+        <ul id="courseList">
+          <li>Loading courses...</li>
+        </ul>
+      </aside> -->
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Top Bar -->
+        <!-- <div class="top-bar">
+          <button onclick="window.location.href='teachers.html'">⬅ Back</button>
+          <h2>Manage Courses</h2>
+        </div> -->
+
+        <!-- Create Course Form -->
+        <button class="open-modal-btn" onclick="openModal()">
+          + Create Course
+        </button>
+
+        <!-- Courses List -->
+        <!-- <div class="courses-container">
+          <h3>Your Courses</h3>
+          <ul id="teacherCourses">
+            <li>Loading...</li>
+          </ul>
+        </div> -->
+      </main>
+    </div>
+    <!-- Create Course Modal -->
+    <div id="courseModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>Create New Course</h3>
+        <input
+          type="text"
+          id="courseTitle"
+          placeholder="Course Title"
+          required
+        />
+        <input type="text" id="className" placeholder="Class Name" required />
+        <input type="text" id="division" placeholder="Division" required />
+        <button onclick="createCourse()">Create</button>
+      </div>
+    </div>
+    <script src="../js/manage-courses.js"></script>
+  </body>
+</html>

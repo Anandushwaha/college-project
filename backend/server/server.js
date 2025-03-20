@@ -9,11 +9,16 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(express.json()); // Required for JSON body parsing
-app.use(cors({ origin: "http://127.0.0.1:5500", credentials: true }));
+app.use(
+  cors({
+    origin: "http://127.0.0.1:5500", // Adjust for frontend URL
+    credentials: true, // Allow sending cookies
+  })
+);
+app.use(express.json());
 app.use(cookieParser());
 
-app.use("/api/auth", authRoute); // Mount the auth routes
+app.use("/api/v1/auth", authRoute); // Mount the auth routes
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

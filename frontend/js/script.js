@@ -1,4 +1,4 @@
-const backendURL = "http://localhost:5000/api/auth";
+const backendURL = "http://localhost:5000/api/v1/auth";
 
 // Signup
 document.getElementById("signupForm").addEventListener("submit", async (e) => {
@@ -15,9 +15,14 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
   });
 
   const data = await response.json();
+
   if (response.ok) {
     alert(data.message);
+
+    // Store role & token
     localStorage.setItem("role", data.user.role);
+    localStorage.setItem("accessToken", data.user.accessToken);
+
     redirectToDashboard(data.user.role);
   } else {
     alert(data.message);
@@ -37,9 +42,13 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   });
 
   const data = await response.json();
+
   if (response.ok) {
-    localStorage.setItem("role", data.role);
-    redirectToDashboard(data.role);
+    // 🔹 Store Access Token & Role
+    localStorage.setItem("accessToken", data.accessToken);
+    localStorage.setItem("role", data.user.role);
+
+    redirectToDashboard(data.user.role);
   } else {
     alert(data.message);
   }
@@ -53,6 +62,8 @@ function redirectToDashboard(role) {
     window.location.href = "teachers.html";
   }
 }
+
+// Sidebar Toggle
 function toggleSidebar() {
   const sidebar = document.querySelector(".sidebar");
   const mainContent = document.querySelector(".main-content");

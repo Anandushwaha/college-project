@@ -5,9 +5,26 @@ import User from "../models/User.js";
 
 const authRoute = express.Router();
 
+// Helper function to generate tokens
+const generateAccessToken = (user) => {
+  return jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "15m" } // Access token expires in 15 minutes
+  );
+};
+
+const generateRefreshToken = (user) => {
+  return jwt.sign(
+    { id: user._id },
+    process.env.REFRESH_SECRET,
+    { expiresIn: "7d" } // Refresh token expires in 7 days
+  );
+};
+
 // Register User
 authRoute.post("/register", async (req, res) => {
-  console.log("Register endpoint hit!"); // Debugging log
+  console.log("Register endpoint hit!");
   const { name, email, password, role } = req.body;
 
   try {
@@ -20,14 +37,17 @@ authRoute.post("/register", async (req, res) => {
     user = new User({ name, email, password: hashedPassword, role });
     await user.save();
 
-    console.log("User registered:", user); // Debugging log
-
+    console.log("User registered:", user);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
     res.status(201).json({
       message: "User registered successfully",
       user: {
         name: user.name,
         email: user.email,
         role: user.role,
+        accessToken,
+        refreshToken,
       },
     });
   } catch (error) {
@@ -37,46 +57,42 @@ authRoute.post("/register", async (req, res) => {
 });
 
 // Login User
+// Login User
 authRoute.post("/login", async (req, res) => {
-  console.log("Login endpoint hit!"); // Debugging log
+  console.log("Login endpoint hit!");
   const { email, password } = req.body;
 
   try {
+    // Find user in database
     const user = await User.findOne({ email });
+    console.log("User found:", user);
+
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Generate JWT Tokens
-    const accessToken = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    // Generate Tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      process.env.REFRESH_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // Set refreshToken as HTTP-only cookie
+    // 🔹 Store refreshToken as HTTP-only cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: "Strict",
     });
 
-    console.log("User logged in:", user); // Debugging log
+    console.log("User logged in successfully");
 
     res.json({
       message: "Login successful",
-      accessToken,
+      accessToken, // Send access token in response
       user: {
         name: user.name,
         email: user.email,
@@ -95,21 +111,29 @@ authRoute.post("/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-// Refresh Token
+// Refresh Token Endpoint
 authRoute.post("/refresh", (req, res) => {
-  const { refreshToken } = req.cookies;
-  if (!refreshToken) return res.status(401).json({ message: "Unauthorized" });
+  try {
+    const refreshToken = req.cookies.refreshToken;
 
-  jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, decoded) => {
-    if (err) return res.status(403).json({ message: "Invalid Refresh Token" });
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-    const newAccessToken = jwt.sign(
-      { id: decoded.id },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
-    res.json({ accessToken: newAccessToken });
-  });
+    jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(403).json({ message: "Invalid Refresh Token" });
+      }
+
+      // Generate a new access token
+      const newAccessToken = generateAccessToken({ _id: decoded.id });
+
+      res.json({ accessToken: newAccessToken });
+    });
+  } catch (error) {
+    console.error("Error in Refresh Token:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
 });
 
 export default authRoute;
