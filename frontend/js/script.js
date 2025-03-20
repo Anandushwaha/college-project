@@ -63,15 +63,20 @@ function redirectToDashboard(role) {
   }
 }
 
-// Sidebar Toggle
 function toggleSidebar() {
-  const sidebar = document.querySelector(".sidebar");
-  const mainContent = document.querySelector(".main-content");
-  sidebar.classList.toggle("active");
+  document.body.classList.toggle("sidebar-collapsed");
 
-  if (sidebar.classList.contains("active")) {
-    mainContent.style.marginLeft = "250px";
-  } else {
-    mainContent.style.marginLeft = "0";
-  }
+  // If you want to save the state
+  const isSidebarCollapsed =
+    document.body.classList.contains("sidebar-collapsed");
+  localStorage.setItem("sidebar-collapsed", isSidebarCollapsed);
 }
+
+// Check saved sidebar state on page load
+document.addEventListener("DOMContentLoaded", () => {
+  const isSidebarCollapsed =
+    localStorage.getItem("sidebar-collapsed") === "true";
+  if (isSidebarCollapsed) {
+    document.body.classList.add("sidebar-collapsed");
+  }
+});

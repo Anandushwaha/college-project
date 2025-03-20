@@ -17,6 +17,9 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+import courseRoutes from "./routes/courseRoutes.js";
+
+app.use("/api/v1/courses", courseRoutes);
 
 app.use("/api/v1/auth", authRoute); // Mount the auth routes
 

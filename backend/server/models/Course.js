@@ -2,37 +2,15 @@ import mongoose from "mongoose";
 
 const CourseSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    className: {
-      type: String,
-      required: true,
-    },
-    division: {
-      type: String,
-      required: true,
-    },
+    title: { type: String, required: true },
+    className: { type: String, required: true },
+    division: { type: String, required: true },
     teacherId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Reference to the User model (Teacher)
+      ref: "User",
       required: true,
     },
-    studentsEnrolled: [
-      {
-        studentId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User", // Reference to the User model (Student)
-        },
-        status: {
-          type: String,
-          enum: ["pending", "approved", "rejected"],
-          default: "pending",
-        },
-      },
-    ],
+    studentsEnrolled: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true }
 );

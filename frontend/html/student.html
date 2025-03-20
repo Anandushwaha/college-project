@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Dashboard</title>
+    <title>Teacher Dashboard</title>
     <link rel="stylesheet" href="../styles/dashboard.css" />
     <script>
       document.addEventListener("DOMContentLoaded", () => {
@@ -17,9 +17,10 @@
   </head>
   <body>
     <div class="dashboard">
-      <!-- Sidebar -->
-      <aside class="sidebar">
+      <!-- Sidebar with toggle button inside -->
+      <aside class="sidebar" id="sidebar">
         <h2>Online Learning</h2>
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <ul id="courseList">
           <li>Course 1</li>
           <li>Course 2</li>
@@ -28,10 +29,10 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="main-content">
+      <main class="main-content" id="mainContent">
         <!-- Top Bar -->
         <div class="top-bar">
-          <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+          <!-- Removed menu toggle from here -->
           <div class="right-icons">
             <img
               src="assets/notification.png"
@@ -53,6 +54,42 @@
         </div>
       </main>
     </div>
+
     <script src="../js/script.js"></script>
+    <script>
+      document
+        .getElementById("manageCoursesCard")
+        .addEventListener("click", () => {
+          window.location.href = "manage-courses.html"; // Redirect to course management page
+        });
+
+      // Sidebar toggle function
+      function toggleSidebar() {
+        document.body.classList.toggle("sidebar-collapsed");
+
+        // Save the state to localStorage
+        const isSidebarCollapsed =
+          document.body.classList.contains("sidebar-collapsed");
+        localStorage.setItem("sidebar-collapsed", isSidebarCollapsed);
+      }
+
+      // Check saved sidebar state on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        const isSidebarCollapsed =
+          localStorage.getItem("sidebar-collapsed") === "true";
+        if (isSidebarCollapsed) {
+          document.body.classList.add("sidebar-collapsed");
+        } else {
+          // On mobile, collapse by default
+          const isMobile = window.innerWidth <= 992;
+          if (
+            isMobile &&
+            !document.body.classList.contains("sidebar-collapsed")
+          ) {
+            document.body.classList.add("sidebar-collapsed");
+          }
+        }
+      });
+    </script>
   </body>
 </html>
