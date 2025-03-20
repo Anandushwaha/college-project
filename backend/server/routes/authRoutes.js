@@ -12,13 +12,16 @@ authRoute.post("/register", async (req, res) => {
 
   try {
     let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: "User already exists" });
+    if (user) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     user = new User({ name, email, password: hashedPassword, role });
     await user.save();
 
-    // Sending name, email, and role in response
+    console.log("User registered:", user); // Debugging log
+
     res.status(201).json({
       message: "User registered successfully",
       user: {
@@ -28,40 +31,48 @@ authRoute.post("/register", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in Register:", error); // Debugging log
+    console.error("Error in Register:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
 
 // Login User
-// Login User
 authRoute.post("/login", async (req, res) => {
+  console.log("Login endpoint hit!"); // Debugging log
   const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
+    if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
 
+    // Generate JWT Tokens
     const accessToken = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "15m" }
     );
+
     const refreshToken = jwt.sign(
       { id: user._id },
       process.env.REFRESH_SECRET,
       { expiresIn: "7d" }
     );
 
+    // Set refreshToken as HTTP-only cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: "Strict",
     });
+
+    console.log("User logged in:", user); // Debugging log
 
     res.json({
       message: "Login successful",
@@ -73,6 +84,7 @@ authRoute.post("/login", async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Error in Login:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });

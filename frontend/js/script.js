@@ -1,14 +1,5 @@
 const backendURL = "http://localhost:5000/api/auth";
-function redirectToDashboard(role) {
-  if (role === "teacher") {
-    window.location.href = "teacher.html";
-  } else if (role === "student") {
-    window.location.href = "student.html";
-  } else {
-    alert("Unknown role. Redirecting to homepage.");
-    window.location.href = "index.html";
-  }
-}
+
 // Signup
 document.getElementById("signupForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -26,8 +17,8 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
   const data = await response.json();
   if (response.ok) {
     alert(data.message);
-    localStorage.setItem("role", data.user.role); // Store role
-    window.location.href = "dashboard.html"; // Redirect
+    localStorage.setItem("role", data.user.role);
+    redirectToDashboard(data.user.role);
   } else {
     alert(data.message);
   }
@@ -47,10 +38,29 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 
   const data = await response.json();
   if (response.ok) {
-    alert(`Welcome ${data.user.name}! Your role: ${data.user.role}`);
-    localStorage.setItem("role", data.user.role); // ✅ Store role
-    redirectToDashboard(data.user.role); // ✅ Redirect based on role
+    localStorage.setItem("role", data.role);
+    redirectToDashboard(data.role);
   } else {
     alert(data.message);
   }
 });
+
+// Redirect Function
+function redirectToDashboard(role) {
+  if (role === "student") {
+    window.location.href = "student.html";
+  } else if (role === "teacher") {
+    window.location.href = "teachers.html";
+  }
+}
+function toggleSidebar() {
+  const sidebar = document.querySelector(".sidebar");
+  const mainContent = document.querySelector(".main-content");
+  sidebar.classList.toggle("active");
+
+  if (sidebar.classList.contains("active")) {
+    mainContent.style.marginLeft = "250px";
+  } else {
+    mainContent.style.marginLeft = "0";
+  }
+}

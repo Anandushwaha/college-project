@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Dashboard</title>
+    <title>Teacher Dashboard</title>
     <link rel="stylesheet" href="../styles/dashboard.css" />
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const role = localStorage.getItem("role");
-        if (role !== "student") {
+        if (role !== "teacher") {
           alert("Access Denied");
           window.location.href = "../index.html";
         }
@@ -44,12 +44,12 @@
 
         <!-- Dashboard Cards -->
         <div class="dashboard-grid">
-          <div class="card">View Enrolled Courses</div>
-          <div class="card">Attend Live Classes</div>
-          <div class="card">View & Download Notes</div>
-          <div class="card">Submit Assignments</div>
-          <div class="card">Ask Questions to Teachers</div>
-          <div class="card">View Job Board</div>
+          <div class="card">Create & Manage Courses</div>
+          <div class="card">Upload & Manage Lectures</div>
+          <div class="card">Assignments & Grading</div>
+          <div class="card">Student Queries & Discussions</div>
+          <div class="card">Live Class Management</div>
+          <div class="card">Announcements & Notifications</div>
         </div>
       </main>
     </div>
