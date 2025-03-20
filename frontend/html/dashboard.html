@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../styles/" />
+  </head>
+  <body>
+    <h1>Welcome!</h1>
+    <p>Redirecting based on role...</p>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "student") {
+          window.location.href = "student.html";
+        } else if (userRole === "teacher") {
+          window.location.href = "teacher.html";
+        } else {
+          window.location.href = "index.html"; // Redirect to login if role is missing
+        }
+      });
+    </script>
+  </body>
+</html>
