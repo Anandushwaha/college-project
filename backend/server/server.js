@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
 import authRoute from "./routes/authRoutes.js"; // Import auth routes
+import authMiddleware from "./middleware/authMiddleware.js";
 
 dotenv.config();
 connectDB();
@@ -11,6 +12,7 @@ connectDB();
 const app = express();
 app.use(
   cors({
+    methods: ["GET", "POST", "PUT", "DELETE"],
     origin: "http://127.0.0.1:5500", // Adjust for frontend URL
     credentials: true, // Allow sending cookies
   })
@@ -18,8 +20,9 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 import courseRoutes from "./routes/courseRoutes.js";
-
-app.use("/api/v1/courses", courseRoutes);
+import notificationRoutes from "./routes/notificationRouter.js";
+app.use("/api/v1", notificationRoutes);
+app.use("/api/v1/courses", authMiddleware, courseRoutes);
 
 app.use("/api/v1/auth", authRoute); // Mount the auth routes
 
