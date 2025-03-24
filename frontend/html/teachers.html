@@ -367,15 +367,18 @@
               <p>${notif.message || "New notification"}</p>
               <small>${new Date(notif.createdAt).toLocaleString()}</small>
               <button class="mark-read" data-id="${notifId}">Mark as Read</button>
-              <button class="accept"
-              data-notification-id="${notifId}"
-              data-student-id="${notif.userId}"
-              data-course-id="${notif.courseId}"
-            
-            >accept</button>
-                  <button class="reject" data-notification-id="${notifId}"
-                  data-student-id="${notif.userId}"
-                  data-course-id="${notif.courseId}">reject</button>
+            <button class="accept" 
+    data-notification-id="${notifId}" 
+    data-student-id="${notif.studentId}" 
+    data-course-id="${notif.courseId}"> <!-- Fix attribute name -->
+    Accept
+  </button>
+  <button class="reject" 
+    data-notification-id="${notifId}" 
+    data-student-id="${notif.studentId}" 
+    data-course-id="${notif.courseId}"> <!-- Fix attribute name -->
+    Reject
+  </button>
     
             `;
 
@@ -492,6 +495,33 @@
             const notificationId = event.target.dataset.id;
             markNotificationAsRead(notificationId);
           }
+          // 2. NEW CODE - Add these lines below ▼▼▼
+          // Handle Accept
+          if (event.target.classList.contains("accept")) {
+            const notificationId = event.target.dataset.notificationId;
+            const studentId = event.target.dataset.studentId;
+            const courseId = event.target.dataset.courseId;
+            handleEnrollmentAction(
+              notificationId,
+              studentId,
+              courseId,
+              "approve"
+            );
+          }
+
+          // Handle Reject
+          if (event.target.classList.contains("reject")) {
+            const notificationId = event.target.dataset.notificationId;
+            const studentId = event.target.dataset.studentId;
+            const courseId = event.target.dataset.courseId;
+            handleEnrollmentAction(
+              notificationId,
+              studentId,
+              courseId,
+              "reject"
+            );
+          }
+          // ▲▲▲ END OF NEW CODE
         });
 
         // ✅ Clear all notifications
@@ -533,6 +563,38 @@
         // ✅ Initial fetch of notifications
         await fetchNotifications();
       });
+      async function handleEnrollmentAction(
+        notificationId,
+        studentId,
+        courseId,
+        action
+      ) {
+        if (!notificationId || !studentId || !courseId) {
+          alert("Missing required data!");
+          return;
+        }
+        try {
+          const token = localStorage.getItem("accessToken");
+          const response = await fetch(
+            `http://localhost:5000/api/v1/courses/enroll/${action}/${notificationId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ studentId, courseId }),
+            }
+          );
+
+          if (!response.ok) throw new Error("Action failed");
+          alert("Action successful!");
+          fetchNotifications(); // Refresh the list
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Action failed: " + error.message);
+        }
+      }
     </script>
   </body>
 </html>

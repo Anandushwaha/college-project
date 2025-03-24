@@ -11,6 +11,7 @@ const CourseSchema = new mongoose.Schema(
       required: true,
     },
     studentsEnrolled: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    pendingEnrollments: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true }
 );

@@ -45,10 +45,12 @@ router.get("/teacher", authMiddleware, async (req, res) => {
 
 // ✅ Update Course (Only Teacher can update)
 router.put("/:id", authMiddleware, async (req, res) => {
+  console.log("update controller hit ");
   try {
     const { title, className, division } = req.body;
 
     const course = await Course.findById(req.params.id);
+    console.log(course);
     if (!course) return res.status(404).json({ message: "Course not found" });
 
     if (course.teacherId.toString() !== req.user.id) {
@@ -62,6 +64,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     course.division = division || course.division;
 
     await course.save();
+    console.log("updated successfully");
     res.json({ message: "Course updated successfully", course });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error });
@@ -74,14 +77,13 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) return res.status(404).json({ message: "Course not found" });
-    console.log("teacher id before stringify" + teacherId);
-    console.log("reqest paramid" + req.params.id);
-    //  CORRECT COMPARISON
+    // Corrected logs
+    console.log("Teacher ID:", req.user.id.toString());
+    console.log("Course ID:", req.params.id);
+
     if (course.teacherId.toString() !== req.user.id.toString()) {
-      console.log("teacher id after stringify" + teacherId);
-      console.log("reqest paramid" + req.params.id);
       return res.status(403).json({
-        message: "Unauthorized: You can only delete courses that you created.",
+        message: "Unauthorized: You can only delete courses you created.",
       });
     }
 
@@ -144,84 +146,104 @@ router.put(
   }
 );
 
-router.put("/enroll/approve/:id", authMiddleware, async (req, res) => {
-  try {
-    const { studentId, courseId } = req.body; // Get student ID & course ID
+// Approve Enrollment
+// Updated approval route
+router.put(
+  "/enroll/approve/:notificationId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { notificationId } = req.params;
+      const { studentId, courseId } = req.body; // Get from request body
 
-    const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ message: "Course not found" });
+      // Validate IDs first
+      if (!mongoose.Types.ObjectId.isValid(courseId)) {
+        return res.status(400).json({ message: "Invalid course ID" });
+      }
 
-    // Check if teacher is authorized
-    if (course.teacherId.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not authorized" });
+      const course = await Course.findById(courseId);
+      if (!course) return res.status(404).json({ message: "Course not found" });
+
+      // Rest of your approval logic...
+    } catch (error) {
+      console.error("Approval Error:", error);
+      res.status(500).json({ message: "Server Error" });
     }
-
-    // Add student to course
-    if (!course.studentsEnrolled.includes(studentId)) {
-      course.studentsEnrolled.push(studentId);
-      await course.save();
-    }
-
-    // Notify the student about acceptance
-    await Notification.create({
-      userId: studentId, // Notify student
-      message: `Your enrollment request for ${course.title} has been approved.`,
-    });
-
-    res.json({ message: "Enrollment request approved" });
-  } catch (error) {
-    console.error("Approval Error:", error);
-    res.status(500).json({ message: "Server Error" });
   }
-});
-router.put("/enroll/reject/:id", authMiddleware, async (req, res) => {
-  try {
-    const { studentId, courseId } = req.body;
+);
+// Reject Enrollment
+router.put(
+  "/enroll/reject/:notificationId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { notificationId } = req.params;
+      const { studentId, courseId } = req.body;
 
-    const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ message: "Course not found" });
+      const course = await Course.findById(courseId);
+      if (!course) return res.status(404).json({ message: "Course not found" });
 
-    if (course.teacherId.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not authorized" });
+      // Verify teacher ownership
+      if (course.teacherId.toString() !== req.user.id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Remove from pending
+      const pendingIndex = course.pendingEnrollments.indexOf(studentId);
+      if (pendingIndex > -1) {
+        course.pendingEnrollments.splice(pendingIndex, 1);
+        await course.save();
+      }
+
+      // Notify student
+      await Notification.create({
+        userId: studentId,
+        message: `Enrollment request for ${course.title} was rejected.`,
+      });
+
+      // Delete teacher's notification
+      await Notification.findByIdAndDelete(notificationId);
+
+      res.json({ message: "Enrollment rejected!" });
+    } catch (error) {
+      res.status(500).json({ message: "Server Error", error });
     }
-
-    // Notify the student about rejection
-    await Notification.create({
-      userId: studentId,
-      message: `Your enrollment request for ${course.title} was rejected.`,
-    });
-
-    res.json({ message: "Enrollment request rejected" });
-  } catch (error) {
-    console.error("Rejection Error:", error);
-    res.status(500).json({ message: "Server Error" });
   }
-});
+);
+
 router.post("/enroll/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const studentId = req.user.id; // Get student ID from token
+    const studentId = req.user.id;
 
-    const course = await Course.findById(id);
-    if (!course) {
-      return res.status(404).json({ message: "Course not found" });
-    }
+    const course = await Course.findById(id).populate("teacherId");
+    if (!course) return res.status(404).json({ message: "Course not found" });
 
-    // Prevent duplicate enrollment requests
-    if (course.studentsEnrolled.includes(studentId)) {
+    // Check if already in pending or enrolled
+    if (
+      course.pendingEnrollments.includes(studentId) ||
+      course.studentsEnrolled.includes(studentId)
+    ) {
       return res
         .status(400)
-        .json({ message: "Enrollment request already sent" });
+        .json({ message: "Request already sent or enrolled" });
     }
 
-    // Store student request (we can add a "pending" state later)
-    course.studentsEnrolled.push(studentId);
+    course.pendingEnrollments.push(studentId);
     await course.save();
 
-    res.status(200).json({ message: "Enrollment request sent successfully!" });
+    // Notify teacher
+    await Notification.create({
+      userId: course.teacherId._id,
+      message: `Student ${studentId} requested enrollment in ${course.title}.`,
+      studentId: studentId,
+      courseId: course._id, // Make sure this is included
+      __v: 0,
+    });
+
+    res.json({ message: "Enrollment request sent!" });
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: "Server Error", error });
   }
 });
-
 export default router;

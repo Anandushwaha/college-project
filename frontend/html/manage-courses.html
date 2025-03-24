@@ -365,7 +365,6 @@
         </div>
       </div>
     </div>
-
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const modal = document.getElementById("courseModal");
@@ -377,19 +376,18 @@
         const submitBtn = form.querySelector('button[type="submit"]');
         const successMsg = document.getElementById("successMessage");
         const errorMsg = document.getElementById("errorMessage");
-        let currentCourseId = null; // Store the ID of the course being edited
+        let currentCourseId = null;
 
         // Function to add event listeners to buttons
         function addEventListenersToButtons() {
           const editBtns = document.querySelectorAll(".edit-course-btn");
           const deleteBtns = document.querySelectorAll(".delete-course-btn");
 
-          // Edit course buttons
+          // MODIFIED: Edit button handler - removed form.onsubmit assignment
           editBtns.forEach((btn) => {
             btn.addEventListener("click", function () {
               const card = this.closest(".course-card");
-              const courseId = card.dataset.id;
-              currentCourseId = courseId; // Store the course ID for updating
+              currentCourseId = card.dataset.id;
               const title = card.querySelector("h3").textContent;
               const className = card
                 .querySelector("p:nth-child(2)")
@@ -407,57 +405,10 @@
               modalTitle.textContent = "Edit Course";
               submitBtn.textContent = "Update Course";
               modal.classList.add("show-modal");
-
-              // Update form submission for editing
-              form.onsubmit = async function (event) {
-                event.preventDefault();
-
-                const updatedData = {
-                  title: document.getElementById("title").value,
-                  className: document.getElementById("className").value,
-                  division: document.getElementById("division").value,
-                };
-
-                try {
-                  const token = localStorage.getItem("accessToken");
-                  const response = await fetch(
-                    `http://localhost:5000/api/v1/courses/${courseId}`,
-                    {
-                      method: "PUT",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify(updatedData),
-                    }
-                  );
-
-                  if (!response.ok) throw new Error("Failed to update course");
-                  closeModal();
-                  fetchCourses(); // Reload courses
-                  // Show success message
-                  successMsg.textContent = "Course updated successfully!";
-                  successMsg.style.display = "block";
-
-                  // Hide message after 3 seconds
-                  setTimeout(() => {
-                    successMsg.style.display = "none";
-                  }, 3000);
-                } catch (error) {
-                  console.error("Error updating course:", error);
-                  errorMsg.textContent =
-                    "Error updating courses. Please try again.";
-                  errorMsg.style.display = "block";
-                  setTimeout(() => {
-                    errorMsg.style.display = "none";
-                  }, 5000);
-                } finally {
-                  form.onsubmit = null; // Remove the temporary event listener
-                }
-              };
             });
           });
 
+          // MODIFIED: Delete button handler - improved error logging
           deleteBtns.forEach((btn) => {
             btn.addEventListener("click", async function () {
               const courseCard = this.closest(".course-card");
@@ -468,7 +419,7 @@
 
               try {
                 const token = localStorage.getItem("accessToken");
-                console.log("Deleting course with token:", token); // ADD THIS LINE
+                console.log("Deleting course ID:", courseId);
 
                 const response = await fetch(
                   `http://localhost:5000/api/v1/courses/${courseId}`,
@@ -482,19 +433,16 @@
 
                 if (!response.ok) throw new Error("Failed to delete course");
 
-                fetchCourses(); // Reload courses after deletion
-                // Show success message
+                fetchCourses();
                 successMsg.textContent = "Course deleted successfully!";
                 successMsg.style.display = "block";
-
-                // Hide message after 3 seconds
                 setTimeout(() => {
                   successMsg.style.display = "none";
                 }, 3000);
               } catch (error) {
-                console.error("Error deleting course:", error);
+                console.error("Delete error details:", error);
                 errorMsg.textContent =
-                  "Error deleting courses. Please try again.";
+                  "Error deleting course. Please try again.";
                 errorMsg.style.display = "block";
                 setTimeout(() => {
                   errorMsg.style.display = "none";
@@ -509,18 +457,18 @@
           try {
             const token = localStorage.getItem("accessToken");
             const response = await fetch(
-              "http://localhost:5000/api/v1/courses/teacher", // CHANGED URL
+              "http://localhost:5000/api/v1/courses/teacher",
               {
                 method: "GET",
                 headers: {
                   "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`, // Include token
+                  Authorization: `Bearer ${token}`,
                 },
               }
             );
             const courses = await response.json();
             const coursesGrid = document.getElementById("coursesGrid");
-            coursesGrid.innerHTML = ""; // Clear existing content
+            coursesGrid.innerHTML = "";
 
             if (courses.length === 0) {
               document.getElementById("emptyState").style.display = "block";
@@ -528,22 +476,22 @@
               document.getElementById("emptyState").style.display = "none";
               courses.forEach((course) => {
                 coursesGrid.innerHTML += `
-          <div class="course-card" data-id="${course._id}">
-            <h3>${course.title}</h3>
-            <p><strong>Class:</strong> ${course.className}</p>
-            <p><strong>Division:</strong> ${course.division}</p>
-            <p><strong>Students Enrolled:</strong> ${course.studentsEnrolled.length}</p>
-            <div class="course-actions">
-              <button class="btn btn-secondary edit-course-btn">Edit</button>
-              <button class="btn btn-danger delete-course-btn">Delete</button>
-            </div>
-          </div>
-        `;
+                  <div class="course-card" data-id="${course._id}">
+                    <h3>${course.title}</h3>
+                    <p><strong>Class:</strong> ${course.className}</p>
+                    <p><strong>Division:</strong> ${course.division}</p>
+                    <p><strong>Students Enrolled:</strong> ${course.studentsEnrolled.length}</p>
+                    <div class="course-actions">
+                      <button class="btn btn-secondary edit-course-btn">Edit</button>
+                      <button class="btn btn-danger delete-course-btn">Delete</button>
+                    </div>
+                  </div>
+                `;
               });
-              addEventListenersToButtons(); // Reattach event listeners after rendering
+              addEventListenersToButtons();
             }
           } catch (error) {
-            console.error("Error fetching courses:", error);
+            console.error("Fetch courses error:", error);
             errorMsg.textContent = "Error loading courses. Please try again.";
             errorMsg.style.display = "block";
             setTimeout(() => {
@@ -551,10 +499,69 @@
             }, 5000);
           }
         }
-        fetchCourses();
+
+        // MODIFIED: Unified form submission handler (replaces old version)
+        form.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const formData = {
+            title: document.getElementById("title").value,
+            className: document.getElementById("className").value,
+            division: document.getElementById("division").value,
+          };
+
+          try {
+            const token = localStorage.getItem("accessToken");
+            if (!token) {
+              throw new Error("No access token found");
+            }
+
+            const url = currentCourseId
+              ? `http://localhost:5000/api/v1/courses/${currentCourseId}`
+              : "http://localhost:5000/api/v1/courses/create";
+
+            const method = currentCourseId ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+              method: method,
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+              throw new Error(
+                currentCourseId
+                  ? "Failed to update course"
+                  : "Failed to create course"
+              );
+            }
+
+            closeModal();
+            fetchCourses();
+            successMsg.textContent = currentCourseId
+              ? "Course updated successfully!"
+              : "Course created successfully!";
+            successMsg.style.display = "block";
+            setTimeout(() => {
+              successMsg.style.display = "none";
+            }, 3000);
+
+            currentCourseId = null;
+          } catch (error) {
+            console.error("Form submission error:", error);
+            errorMsg.textContent = error.message;
+            errorMsg.style.display = "block";
+            setTimeout(() => {
+              errorMsg.style.display = "none";
+            }, 5000);
+          }
+        });
 
         // Open modal
         createBtn.addEventListener("click", function () {
+          currentCourseId = null;
           modal.classList.add("show-modal");
           modalTitle.textContent = "Create Course";
           submitBtn.textContent = "Create Course";
@@ -569,56 +576,8 @@
         closeBtn.addEventListener("click", closeModal);
         cancelBtn.addEventListener("click", closeModal);
 
-        // Form submission
-        form.addEventListener("submit", async function (e) {
-          e.preventDefault();
-
-          const title = document.getElementById("title").value;
-          const className = document.getElementById("className").value;
-          const division = document.getElementById("division").value;
-
-          const courseData = { title, className, division };
-
-          try {
-            const accessToken = localStorage.getItem("accessToken"); // Retrieve token
-
-            if (!accessToken) {
-              console.error("No access token found! User might be logged out.");
-              return;
-            }
-            const response = await fetch(
-              "http://localhost:5000/api/v1/courses/create",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${accessToken}`, // Send token
-                },
-                body: JSON.stringify({ title, className, division }),
-              }
-            );
-
-            if (!response.ok) throw new Error("Failed to create course");
-
-            closeModal();
-            fetchCourses(); // Reload courses
-            // Show success message
-            successMsg.textContent = "Course created successfully!";
-            successMsg.style.display = "block";
-
-            // Hide message after 3 seconds
-            setTimeout(() => {
-              successMsg.style.display = "none";
-            }, 3000);
-          } catch (error) {
-            console.error("Error creating course:", error);
-            errorMsg.textContent = "Error creating courses. Please try again.";
-            errorMsg.style.display = "block";
-            setTimeout(() => {
-              errorMsg.style.display = "none";
-            }, 5000);
-          }
-        });
+        // Initial fetch
+        fetchCourses();
       });
     </script>
   </body>
