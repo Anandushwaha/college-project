@@ -1,9 +1,16 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import Course from "../models/Course.js";
-import Notification from "../models/Notification.js";
-const router = express.Router();
 
+import { storage } from "../config/cloudinary.js";
+const upload = multer({ storage });
+import multer from "multer";
+import {
+  uploadCourseContent,
+  getCourseContent,
+  deleteCourseContent,
+} from "../controller/courseController.js";
+const router = express.Router();
 // ✅ Create Course (Only teachers can create courses)
 router.post("/create", authMiddleware, async (req, res) => {
   try {
@@ -232,18 +239,16 @@ router.post("/enroll/:id", authMiddleware, async (req, res) => {
     course.pendingEnrollments.push(studentId);
     await course.save();
 
-    // Notify teacher
-    await Notification.create({
-      userId: course.teacherId._id,
-      message: `Student ${studentId} requested enrollment in ${course.title}.`,
-      studentId: studentId,
-      courseId: course._id, // Make sure this is included
-      __v: 0,
-    });
-
     res.json({ message: "Enrollment request sent!" });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error });
   }
 });
+router.post("/:courseId/content", upload.single("file"), uploadCourseContent);
+
+// Get course content
+router.get("/:courseId/content", getCourseContent);
+
+// Delete course content
+router.delete("/:courseId/content/:contentId", deleteCourseContent);
 export default router;

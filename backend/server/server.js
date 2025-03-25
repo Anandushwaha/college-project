@@ -20,8 +20,7 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 import courseRoutes from "./routes/courseRoutes.js";
-import notificationRoutes from "./routes/notificationRouter.js";
-app.use("/api/v1", notificationRoutes);
+
 app.use("/api/v1/courses", authMiddleware, courseRoutes);
 
 app.use("/api/v1/auth", authRoute); // Mount the auth routes

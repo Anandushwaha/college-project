@@ -274,6 +274,149 @@
       .show-modal {
         display: flex;
       }
+      /* Plus Button */
+      .plus-button {
+        background-color: #007bff;
+        color: white;
+        font-size: 24px;
+        border: none;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Modal Styling */
+      .custom-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        /* Changed from display: none */
+        display: flex;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      /* Remove this duplicate style */
+      /*
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 350px;
+  text-align: center;
+}
+*/
+
+      .close-btn {
+        float: right;
+        font-size: 24px;
+        cursor: pointer;
+      }
+      /* Enrollment Modal Styles */
+      .custom-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .custom-modal.hidden {
+        display: none;
+      }
+
+      .custom-modal .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        width: 400px;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .custom-modal h2 {
+        margin-top: 0;
+        color: #2c3e50;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .custom-modal textarea {
+        width: 100%;
+        height: 100px;
+        padding: 0.8rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+        font-family: Arial, sans-serif;
+      }
+
+      .custom-modal select {
+        width: 100%;
+        padding: 0.8rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: white;
+        appearance: none;
+      }
+
+      .custom-modal button#sendEnrollmentRequest {
+        background-color: #3498db;
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+      }
+
+      .custom-modal button#sendEnrollmentRequest:hover {
+        background-color: #2980b9;
+      }
+
+      .close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.5rem;
+        color: #666;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0 0.5rem;
+      }
+
+      .close-btn:hover {
+        color: #333;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 480px) {
+        .custom-modal .modal-content {
+          width: 90%;
+          padding: 1.5rem;
+        }
+      }
     </style>
   </head>
   <body>
@@ -286,9 +429,24 @@
 
           <h2>Manage Courses</h2>
         </div>
+        <button id="openEnrollmentModal" class="plus-button">+</button>
         <button id="createCourseBtn" class="btn btn-primary">
           Create New Course
         </button>
+      </div>
+      <div id="enrollmentModal" class="custom-modal hidden">
+        <div class="modal-content">
+          <span class="close-btn" id="closeEnrollmentModal">&times;</span>
+          <h2>Send Enrollment Request</h2>
+          <textarea
+            id="requestMessage"
+            placeholder="Enter a short message..."
+          ></textarea>
+          <select id="courseSelect">
+            <option value="">Select a Course</option>
+          </select>
+          <button id="sendEnrollmentRequest">Send Request</button>
+        </div>
       </div>
 
       <div
@@ -578,6 +736,113 @@
 
         // Initial fetch
         fetchCourses();
+      });
+      document.addEventListener("DOMContentLoaded", () => {
+        console.log("JavaScript Loaded!");
+
+        const openModalBtn = document.getElementById("openEnrollmentModal");
+        const enrollmentModal = document.getElementById("enrollmentModal");
+        const closeModalBtn = document.getElementById("closeEnrollmentModal");
+        const courseSelect = document.getElementById("courseSelect");
+        const sendRequestBtn = document.getElementById("sendEnrollmentRequest");
+        const requestMessage = document.getElementById("requestMessage");
+
+        // Fetch courses from API and populate the dropdown
+        async function fetchCoursesForEnrollment() {
+          try {
+            const token = localStorage.getItem("accessToken");
+            if (!token) {
+              throw new Error("Access token not found!");
+            }
+
+            const response = await fetch(
+              "http://localhost:5000/api/v1/courses/teacher",
+              {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (!response.ok) throw new Error("Failed to fetch courses.");
+
+            const courses = await response.json();
+            console.log("Fetched Courses:", courses); // Debugging
+
+            courseSelect.innerHTML =
+              '<option value="">Select a Course</option>';
+
+            courses.forEach((course) => {
+              const option = document.createElement("option");
+              option.value = course._id;
+              option.textContent = `${course.title} (${course.className} - ${course.division})`;
+              courseSelect.appendChild(option);
+            });
+          } catch (error) {
+            console.error("Error fetching courses:", error);
+          }
+        }
+
+        // Open modal and load course options
+        openModalBtn.addEventListener("click", () => {
+          console.log("Plus button clicked! Opening modal...");
+          enrollmentModal.classList.remove("hidden");
+          fetchCoursesForEnrollment();
+        });
+
+        // Close modal
+        closeModalBtn.addEventListener("click", () => {
+          enrollmentModal.classList.add("hidden");
+        });
+
+        window.addEventListener("click", (event) => {
+          if (event.target === enrollmentModal) {
+            enrollmentModal.classList.add("hidden");
+          }
+        });
+
+        // Handle sending enrollment request
+        sendRequestBtn.addEventListener("click", async () => {
+          const selectedCourseId = courseSelect.value;
+          const message = requestMessage.value.trim();
+
+          if (!selectedCourseId) {
+            alert("Please select a course!");
+            return;
+          }
+
+          try {
+            const token = localStorage.getItem("accessToken");
+            if (!token) {
+              throw new Error("Access token not found!");
+            }
+
+            const response = await fetch(
+              `http://localhost:5000/api/v1/courses/enroll/${selectedCourseId}`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ message }), // Send only message if required
+              }
+            );
+
+            if (!response.ok)
+              throw new Error("Failed to send enrollment request.");
+
+            alert("Enrollment request sent successfully!");
+            enrollmentModal.classList.add("hidden");
+            requestMessage.value = "";
+            courseSelect.value = "";
+          } catch (error) {
+            console.error("Error sending enrollment request:", error);
+            alert("Error sending request. Try again later.");
+          }
+        });
       });
     </script>
   </body>
