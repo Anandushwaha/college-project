@@ -2,14 +2,6 @@ import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import Course from "../models/Course.js";
 
-import { storage } from "../config/cloudinary.js";
-const upload = multer({ storage });
-import multer from "multer";
-import {
-  uploadCourseContent,
-  getCourseContent,
-  deleteCourseContent,
-} from "../controller/courseController.js";
 const router = express.Router();
 // ✅ Create Course (Only teachers can create courses)
 router.post("/create", authMiddleware, async (req, res) => {
@@ -104,12 +96,13 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 // ✅ Get All Available Courses (Students can view)
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const courses = await Course.find().populate("teacherId", "name email");
+    const courses = await Course.find().populate("teacherId", "name email"); // ✅ Populate teacher details
     res.json(courses);
   } catch (error) {
     res.status(500).json({ message: "Server Error", error });
   }
 });
+
 router.put(
   "/enroll/approve/:notificationId",
   authMiddleware,
@@ -244,11 +237,5 @@ router.post("/enroll/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Server Error", error });
   }
 });
-router.post("/:courseId/content", upload.single("file"), uploadCourseContent);
 
-// Get course content
-router.get("/:courseId/content", getCourseContent);
-
-// Delete course content
-router.delete("/:courseId/content/:contentId", deleteCourseContent);
 export default router;

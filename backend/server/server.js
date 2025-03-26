@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
 import authRoute from "./routes/authRoutes.js"; // Import auth routes
 import authMiddleware from "./middleware/authMiddleware.js";
-
+import lectureRoutes from "./routes/lectureRoutes.js";
 dotenv.config();
 connectDB();
 
@@ -24,6 +24,6 @@ import courseRoutes from "./routes/courseRoutes.js";
 app.use("/api/v1/courses", authMiddleware, courseRoutes);
 
 app.use("/api/v1/auth", authRoute); // Mount the auth routes
-
+app.use("/api/v1/lectures", lectureRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

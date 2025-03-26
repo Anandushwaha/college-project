@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -10,12 +9,4 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "course_content", // Folder name in Cloudinary
-    resource_type: "auto",
-  },
-});
-
-export { cloudinary, storage };
+export default cloudinary;
