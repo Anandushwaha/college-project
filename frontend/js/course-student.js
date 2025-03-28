@@ -25,8 +25,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         (course) => `
             <div class="course-card">
                 <h3>${course.title}</h3>
-                <p><strong>Instructor:</strong> ${course.teacherId.name} </p>
-                <button class="enroll-btn"  id ="enroll" data-id="${course._id}">Enroll</button>
+               <p><strong>Instructor:</strong> ${
+                 course.teacherId ? course.teacherId.name : "Unknown"
+               } </p>
+
+                <button class="enroll-btn"  id ="enroll" data-id="${
+                  course._id
+                }">Enroll</button>
             </div>
         `
       )

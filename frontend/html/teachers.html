@@ -219,12 +219,12 @@
             <div class="card-icon">📚</div>
             Create & Manage Courses
           </div>
-          <div class="card">
+          <div class="card" id="Upload-document">
             <div class="card-icon">🎬</div>
             Upload & Manage Lectures
           </div>
 
-          <div class="card">
+          <div class="card" id="Upload-assignment">
             <div class="card-icon">📝</div>
             Assignments & Grading
           </div>
@@ -236,7 +236,7 @@
             <div class="card-icon">🎯</div>
             Live Class Management
           </div>
-          <div class="card">
+          <div class="card" id="announcement">
             <div class="card-icon">📢</div>
             Announcements & Notifications
           </div>
@@ -252,6 +252,14 @@
         .addEventListener("click", () => {
           window.location.href = "manage-courses.html"; // Redirect to course management page
         });
+      document
+        .getElementById("Upload-assignment")
+        .addEventListener("click", () => {
+          window.location.href = "assignment-teacher.html"; // Redirect to assignment page
+        });
+      document.getElementById("announcement").addEventListener("click", () => {
+        window.location.href = "announement-teacher.html"; // Redirect to assignment page
+      });
 
       // Sidebar toggle function
       function toggleSidebar() {
@@ -262,7 +270,11 @@
           document.body.classList.contains("sidebar-collapsed");
         localStorage.setItem("sidebar-collapsed", isSidebarCollapsed);
       }
-
+      document
+        .getElementById("Upload-document")
+        .addEventListener("click", () => {
+          window.location.href = "upload-lectures.html";
+        });
       // Check saved sidebar state on page load
       document.addEventListener("DOMContentLoaded", () => {
         const isSidebarCollapsed =
