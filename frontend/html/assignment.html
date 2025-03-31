@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Assignment Dashboard</title>
+    <style>
+      /* CSS Reset and Base Styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      :root {
+        --primary-color: #3a86ff;
+        --secondary-color: #8338ec;
+        --success-color: #06d6a0;
+        --warning-color: #ffbe0b;
+        --danger-color: #ef476f;
+        --light-color: #f8f9fa;
+        --dark-color: #212529;
+        --gray-color: #e9ecef;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --border-radius: 8px;
+      }
+
+      body {
+        background-color: #f5f7fb;
+        color: var(--dark-color);
+        line-height: 1.6;
+      }
+
+      a {
+        text-decoration: none;
+        color: var(--primary-color);
+      }
+
+      /* Header Styles */
+      header {
+        background-color: white;
+        box-shadow: var(--shadow);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        font-weight: bold;
+        font-size: 1.5rem;
+        color: var(--primary-color);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .nav-links a {
+        color: var(--dark-color);
+        transition: color 0.3s;
+      }
+
+      .nav-links a:hover {
+        color: var(--primary-color);
+      }
+
+      /* Main Content Styles */
+      .container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+
+      .page-title {
+        font-size: 1.8rem;
+        color: var(--dark-color);
+      }
+
+      .btn {
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--border-radius);
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.3s, transform 0.2s;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: #2a75e6;
+      }
+
+      .btn-secondary {
+        background-color: var(--secondary-color);
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background-color: #7028d8;
+      }
+
+      /* Course Selection Styles */
+      .course-selector {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+      }
+
+      .course-selector select {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid var(--gray-color);
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        outline: none;
+      }
+
+      /* Assignments Grid Styles */
+      .assignments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .assignment-card {
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: transform 0.3s;
+      }
+
+      .assignment-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .card-header {
+        padding: 1.2rem;
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .card-title {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .due-date {
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+
+      .card-body {
+        padding: 1.2rem;
+      }
+
+      .card-description {
+        margin-bottom: 1rem;
+        color: var(--dark-color);
+      }
+
+      .file-link {
+        display: inline-block;
+        margin-top: 0.5rem;
+        color: var(--primary-color);
+      }
+
+      .card-footer {
+        padding: 1.2rem;
+        background-color: var(--light-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .status-badge {
+        padding: 0.3rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .status-pending {
+        background-color: var(--warning-color);
+        color: var(--dark-color);
+      }
+
+      .status-submitted {
+        background-color: var(--success-color);
+        color: white;
+      }
+
+      .status-late {
+        background-color: var(--danger-color);
+        color: white;
+      }
+
+      .submit-btn {
+        padding: 0.5rem 1rem;
+      }
+
+      /* Submission Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background-color: white;
+        border-radius: var(--border-radius);
+        width: 90%;
+        max-width: 500px;
+        box-shadow: var(--shadow);
+      }
+
+      .modal-header {
+        padding: 1.2rem;
+        background-color: var(--primary-color);
+        color: white;
+        border-top-left-radius: var(--border-radius);
+        border-top-right-radius: var(--border-radius);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-title {
+        font-size: 1.2rem;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+
+      .modal-body {
+        padding: 1.2rem;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+
+      .form-group textarea {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid var(--gray-color);
+        border-radius: var(--border-radius);
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      .form-group input[type="file"] {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid var(--gray-color);
+        border-radius: var(--border-radius);
+      }
+
+      .modal-footer {
+        padding: 1.2rem;
+        background-color: var(--light-color);
+        border-bottom-left-radius: var(--border-radius);
+        border-bottom-right-radius: var(--border-radius);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+      }
+
+      /* Course Management Header Styles */
+      .course-management-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .back-button {
+        padding: 0.3rem 0.7rem;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="course-management-header">
+      <div class="header-left">
+        <a href="student.html" class="btn btn-secondary back-button"
+          >← Back to Dashboard</a
+        >
+        <h2>Student Assignments</h2>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="course-selector">
+        <select id="course-select">
+          <option value="">Select a course</option>
+          <!-- Courses will be populated dynamically -->
+        </select>
+      </div>
+
+      <div class="assignments-grid" id="assignments-grid">
+        <!-- Assignment cards will be populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Submission Modal -->
+    <div class="modal" id="submission-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Submit Assignment</h3>
+          <button class="close-btn" id="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="submission-form">
+            <input type="hidden" id="assignment-id" />
+            <div class="form-group">
+              <label for="submission-comment">Comment (Optional)</label>
+              <textarea
+                id="submission-comment"
+                placeholder="Add any comments about your submission..."
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label for="submission-file">Upload File</label>
+              <input type="file" id="submission-file" required />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancel-submission">
+            Cancel
+          </button>
+          <button class="btn btn-primary" id="submit-assignment">Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const BASE_URL = "http://localhost:5000/api/v1";
+        const courseSelect = document.getElementById("course-select");
+        const assignmentsGrid = document.getElementById("assignments-grid");
+        const submissionModal = document.getElementById("submission-modal");
+        const closeModalBtn = document.getElementById("close-modal");
+        const cancelSubmissionBtn =
+          document.getElementById("cancel-submission");
+        const submissionForm = document.getElementById("submission-form");
+        const assignmentIdInput = document.getElementById("assignment-id");
+        const submissionCommentInput =
+          document.getElementById("submission-comment");
+        const submissionFileInput = document.getElementById("submission-file");
+        const submitAssignmentBtn =
+          document.getElementById("submit-assignment");
+
+        // Check if user is logged in
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          window.location.href = "../index.html";
+          return;
+        }
+
+        // Fetch enrolled courses
+        async function fetchCourses() {
+          try {
+            // Changed endpoint to match what's likely available in your backend
+            const response = await fetch(`${BASE_URL}/courses/`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+
+            if (!response.ok) {
+              throw new Error("Failed to fetch courses");
+            }
+
+            const courses = await response.json();
+
+            // Populate course dropdown
+            courseSelect.innerHTML =
+              '<option value="">Select a course</option>';
+            courses.forEach((course) => {
+              const option = document.createElement("option");
+              option.value = course._id;
+              option.textContent = course.title;
+              courseSelect.appendChild(option);
+            });
+
+            // If there are courses, fetch assignments for the first one
+            if (courses.length > 0) {
+              courseSelect.value = courses[0]._id;
+              fetchAssignments(courses[0]._id);
+            }
+          } catch (error) {
+            console.error("Error fetching courses:", error);
+            alert("Failed to load courses. Please try again later.");
+          }
+        }
+
+        // Fetch assignments for a specific course
+        async function fetchAssignments(courseId) {
+          try {
+            const response = await fetch(
+              `${BASE_URL}/assignment/course/${courseId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error("Failed to fetch assignments");
+            }
+
+            const assignments = await response.json();
+
+            // Clear assignments grid
+            assignmentsGrid.innerHTML = "";
+
+            // If no assignments, show message
+            if (assignments.length === 0) {
+              assignmentsGrid.innerHTML =
+                "<p>No assignments found for this course.</p>";
+              return;
+            }
+
+            // Populate assignments grid
+            assignments.forEach((assignment) => {
+              const card = document.createElement("div");
+              card.className = "assignment-card";
+              card.innerHTML = `
+          <div class="card-header">
+            <h3 class="card-title">${assignment.title}</h3>
+            <div class="due-date">Due: ${new Date(
+              assignment.dueDate
+            ).toLocaleDateString()}</div>
+          </div>
+          <div class="card-body">
+            <p class="card-description">${assignment.description}</p>
+            ${
+              assignment.fileUrl
+                ? `<a href="${assignment.fileUrl}" class="file-link">📄 Assignment File</a>`
+                : ""
+            }
+          </div>
+          <div class="card-footer">
+            <span class="status-badge status-pending">Not Submitted</span>
+            <button class="btn btn-primary submit-btn" data-id="${
+              assignment._id
+            }">
+              Submit Assignment
+            </button>
+          </div>
+        `;
+              assignmentsGrid.appendChild(card);
+            });
+
+            // Add event listeners to submit buttons
+            document.querySelectorAll(".submit-btn").forEach((button) => {
+              button.addEventListener("click", function () {
+                const assignmentId = this.getAttribute("data-id");
+                openSubmissionModal(assignmentId);
+              });
+            });
+          } catch (error) {
+            console.error("Error fetching assignments:", error);
+            alert("Failed to load assignments.");
+          }
+        }
+
+        // Open submission modal
+        function openSubmissionModal(assignmentId) {
+          assignmentIdInput.value = assignmentId;
+          submissionCommentInput.value = "";
+          submissionFileInput.value = "";
+          submissionModal.classList.add("active");
+        }
+
+        // Close submission modal
+        function closeSubmissionModal() {
+          submissionModal.classList.remove("active");
+        }
+
+        // Event listeners
+        courseSelect.addEventListener("change", function () {
+          const courseId = this.value;
+          if (courseId) {
+            fetchAssignments(courseId);
+          } else {
+            assignmentsGrid.innerHTML = "";
+          }
+        });
+
+        closeModalBtn.addEventListener("click", closeSubmissionModal);
+        cancelSubmissionBtn.addEventListener("click", closeSubmissionModal);
+
+        // Handle assignment submission
+        submitAssignmentBtn.addEventListener("click", async function () {
+          const assignmentId = assignmentIdInput.value;
+          const comment = submissionCommentInput.value;
+          const file = submissionFileInput.files[0];
+
+          if (!file) {
+            alert("Please select a file to upload");
+            return;
+          }
+
+          try {
+            const formData = new FormData();
+            formData.append("assignmentId", assignmentId);
+            formData.append("comment", comment);
+            formData.append("file", file);
+
+            const response = await fetch(
+              `${BASE_URL}/assignment/submit/${assignmentId}`, // Fixed: Using actual assignmentId
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+              }
+            );
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(
+                errorData.message || "Failed to submit assignment"
+              );
+            }
+
+            alert("Assignment submitted successfully!");
+            closeSubmissionModal();
+
+            // Refresh assignments to update status
+            const courseId = courseSelect.value;
+            if (courseId) {
+              fetchAssignments(courseId);
+            }
+          } catch (error) {
+            console.error("Error submitting assignment:", error);
+            alert(
+              error.message || "Failed to submit assignment. Please try again."
+            );
+          }
+        });
+
+        // Initialize
+        fetchCourses();
+      });
+    </script>
+  </body>
+</html>

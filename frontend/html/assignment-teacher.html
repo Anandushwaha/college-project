@@ -56,16 +56,49 @@
         padding: 12px;
         text-align: left;
       }
+      /* Add to your existing styles */
       .modal {
         display: none;
         position: fixed;
-        z-index: 1;
-        left: 0;
         top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.4);
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background-color: white;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 5px;
+        width: 80%;
+        max-width: 500px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .modal-footer {
+        margin-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
       }
       .modal-content {
         background-color: #fefefe;
@@ -208,51 +241,73 @@
         </div>
 
         <!-- Submissions Section -->
-        <div id="submissions-section" class="section" style="display: none">
+        <div id="submissions-section" class="section">
           <h2>Student Submissions</h2>
+
+          <!-- Add a course selector specifically for submissions -->
+          <div class="form-group" style="margin-bottom: 20px">
+            <label for="submissions-course-select">Select Course:</label>
+            <select id="submissions-course-select" class="form-control">
+              <option value="">Select Course</option>
+              <!-- Options will be populated dynamically -->
+            </select>
+          </div>
+
           <table class="assignment-list">
             <thead>
               <tr>
-                <th>Student</th>
+                <th>Student Name</th>
                 <th>Assignment</th>
-                <th>Submission Date</th>
-                <th>Status</th>
+                <th>Submitted Date</th>
+                <th>File</th>
+                <th>Grade</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="submissions-list">
-              <!-- Dynamically populated submissions -->
+              <!-- Submissions will be populated here -->
             </tbody>
           </table>
+        </div>
+
+        <!-- Grade Submission Modal -->
+        <div id="grade-modal" class="modal">
+          <div class="modal-content">
+            <h3>Grade Submission</h3>
+            <form id="grade-form">
+              <div class="form-group">
+                <label for="grade">Grade (0-100):</label>
+                <input type="number" id="grade" min="0" max="100" required />
+              </div>
+              <div class="form-group">
+                <label for="feedback">Feedback:</label>
+                <textarea id="feedback" rows="4"></textarea>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  onclick="closeGradeModal()"
+                >
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  Submit Grade
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Remove this duplicate modal -->
     <!-- Grade Assignment Modal -->
-    <div id="grade-modal" class="modal">
+    <div id="grade-modal-duplicate" class="modal">
       <div class="modal-content">
         <h2>Grade Assignment</h2>
-        <form id="grade-form">
-          <label>Score (0-100):</label>
-          <input
-            type="number"
-            id="assignment-score"
-            min="0"
-            max="100"
-            required
-          />
-
-          <label>Feedback:</label>
-          <textarea id="assignment-feedback" required></textarea>
-
-          <button type="submit" class="btn">Submit Grade</button>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onclick="closeModal()"
-          >
-            Cancel
-          </button>
+        <form id="grade-form-duplicate">
+          <!-- Form content -->
         </form>
       </div>
     </div>
@@ -275,16 +330,15 @@
 
       document.addEventListener("DOMContentLoaded", () => {
         fetchCourses().then(() => {
-          // After courses are fetched, get the first course (if exists) to fetch assignments
           const courseSelect = document.getElementById("course-select");
+          // Also populate the submissions course select
+          populateSubmissionsCourseSelect();
+
           if (courseSelect.options.length > 1) {
-            // First option is "Select Course", so we use the second option
             const firstCourseId = courseSelect.options[1].value;
             fetchAssignments(firstCourseId);
           }
         });
-
-        fetchSubmissions();
 
         // Add event listener to course select to trigger assignments fetch
         const courseSelect = document.getElementById("course-select");
@@ -298,7 +352,45 @@
             assignmentsList.innerHTML = "";
           }
         });
+
+        // Add event listener for submissions course select
+        const submissionsCourseSelect = document.getElementById(
+          "submissions-course-select"
+        );
+        submissionsCourseSelect.addEventListener("change", () => {
+          fetchSubmissions();
+        });
       });
+
+      // Function to populate the submissions course select
+      async function populateSubmissionsCourseSelect() {
+        try {
+          const courses = await fetchCoursesData();
+          const submissionsCourseSelect = document.getElementById(
+            "submissions-course-select"
+          );
+
+          submissionsCourseSelect.innerHTML = `<option value="">Select Course</option>`;
+          courses.forEach((course) => {
+            const option = document.createElement("option");
+            option.value = course._id;
+            option.textContent = course.title;
+            submissionsCourseSelect.appendChild(option);
+          });
+        } catch (error) {
+          console.error("Error populating submissions course select:", error);
+        }
+      }
+
+      // Helper function to fetch courses data
+      async function fetchCoursesData() {
+        const response = await fetch(`${BASE_URL}/courses/teacher`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
+        return await response.json();
+      }
 
       // Fetch Courses and Populate Dropdown
       async function fetchCourses() {
@@ -382,175 +474,178 @@
           alert("Failed to fetch assignments. Please check your connection.");
         }
       }
-      // Fetch Student Submissions and Display in Table
+      // Add this to your existing JavaScript
       async function fetchSubmissions() {
         try {
-          const courseSelect = document.getElementById("course-select");
-          const selectedCourseId = courseSelect.value;
+          // Get the submissions list element first
+          const submissionsList = document.getElementById("submissions-list");
 
-          if (!selectedCourseId) {
-            const submissionsList = document.getElementById("submissions-list");
-            submissionsList.innerHTML = `
-        <tr>
-          <td colspan="5" class="text-center">Please select a course to view submissions.</td>
-        </tr>
-      `;
+          // Get the course ID from the submissions course select
+          const courseId = document.getElementById(
+            "submissions-course-select"
+          ).value;
+          if (!courseId) {
+            submissionsList.innerHTML =
+              "<tr><td colspan='6'>Please select a course first</td></tr>";
             return;
           }
 
-          // Fetch assignments for the selected course first
+          submissionsList.innerHTML =
+            "<tr><td colspan='6'>Loading submissions...</td></tr>";
+
           const assignmentsResponse = await fetch(
-            `${BASE_URL}/assignment/course/${selectedCourseId}`,
+            `${BASE_URL}/assignment/course/${courseId}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
               },
             }
           );
+
+          if (!assignmentsResponse.ok) {
+            throw new Error("Failed to fetch assignments");
+          }
 
           const assignments = await assignmentsResponse.json();
-
-          if (assignments.length === 0) {
-            const submissionsList = document.getElementById("submissions-list");
-            submissionsList.innerHTML = `
-        <tr>
-          <td colspan="5" class="text-center">No assignments found for this course.</td>
-        </tr>
-      `;
-            return;
-          }
-
-          // Fetch submissions for the course
-          const response = await fetch(
-            `${BASE_URL}/submissions/course/${selectedCourseId}`, // Updated endpoint to fetch submissions by course
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-              },
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-
-          const submissions = await response.json();
-          const submissionsList = document.getElementById("submissions-list");
           submissionsList.innerHTML = "";
 
-          // If no submissions, show a message
-          if (submissions.length === 0) {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-        <td colspan="5" class="text-center">
-          No submissions yet for this course.
-        </td>
-      `;
-            submissionsList.appendChild(row);
+          if (assignments.length === 0) {
+            submissionsList.innerHTML =
+              "<tr><td colspan='6'>No assignments found for this course</td></tr>";
             return;
           }
 
-          // Loop through submissions and display them
-          submissions.forEach((submission) => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-        <td>${submission.student.name}</td>
-        <td>${submission.assignment.title}</td>
-        <td>${new Date(submission.submissionDate).toLocaleDateString()}</td>
-        <td>${submission.status}</td>
-        <td>
-          <button class="btn btn-secondary" onclick="openGradeModal('${
-            submission._id
-          }')">Grade</button>
-        </td>
-      `;
-            submissionsList.appendChild(row);
-          });
-        } catch (error) {
-          console.error("Error fetching submissions:", error);
-          alert("Failed to fetch submissions. Please check your connection.");
-        }
-      }
-      // Handle Assignment Creation
-      document
-        .getElementById("create-assignment-form")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
+          let hasSubmissions = false;
 
-          const courseId = document.getElementById("course-select").value;
-          const title = document.getElementById("assignment-title").value;
-          const description = document.getElementById(
-            "assignment-description"
-          ).value;
-          const dueDate = document.getElementById("due-date").value;
-          const files = document.getElementById("assignment-files").files;
-
-          const formData = new FormData();
-          formData.append("courseId", courseId);
-          formData.append("title", title);
-          formData.append("description", description);
-          formData.append("dueDate", dueDate);
-          for (let file of files) {
-            formData.append("file", file);
-          }
-
-          try {
-            const response = await fetch(
-              "http://localhost:5000/api/v1/assignment/create",
+          // For each assignment, fetch its submissions
+          for (const assignment of assignments) {
+            const submissionsResponse = await fetch(
+              `${BASE_URL}/assignment/submissions/${assignment._id}`,
               {
-                method: "POST",
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem(
                     "accessToken"
                   )}`,
                 },
-                body: formData,
               }
             );
 
-            if (response.ok) {
-              alert("Assignment Created Successfully!");
-              fetchAssignments();
-              // Reset form
-              document.getElementById("create-assignment-form").reset();
-              // Switch back to assignments view
-              showSection("assignments");
-            } else {
-              const errorText = await response.text();
-              alert(`Error creating assignment: ${errorText}`);
-            }
-          } catch (error) {
-            console.error("Error creating assignment:", error);
-            alert("Failed to create assignment. Please try again.");
-          }
-        });
+            if (!submissionsResponse.ok) continue;
 
-      // Open Grade Modal
+            const submissions = await submissionsResponse.json();
+            console.log("Submissions data:", submissions);
+
+            if (submissions.length > 0) {
+              hasSubmissions = true;
+
+              submissions.forEach((submission) => {
+                console.log("Individual submission:", submission);
+                // Check the structure of student data
+                console.log("Student data:", submission.student);
+
+                // Get student name with better fallback handling
+                let studentName = "Unknown Student";
+                if (submission.student) {
+                  if (
+                    typeof submission.student === "object" &&
+                    submission.student.name
+                  ) {
+                    studentName = submission.student.name;
+                  } else if (typeof submission.student === "string") {
+                    studentName = submission.student;
+                  }
+                } else if (submission.studentName) {
+                  studentName = submission.studentName;
+                } else if (
+                  submission.studentId &&
+                  typeof submission.studentId === "object"
+                ) {
+                  studentName =
+                    submission.studentId.name ||
+                    "Student ID: " + submission.studentId._id;
+                }
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                  <td>${studentName}</td>
+                  <td>${assignment.title || "Unknown Assignment"}</td>
+                  <td>${new Date(
+                    submission.submittedAt
+                  ).toLocaleDateString()}</td>
+                  <td><a href="${
+                    submission.fileUrl
+                  }" target="_blank" class="btn btn-secondary">View File</a></td>
+                  <td>${submission.grade || "Not graded"}</td>
+                  <td>
+                    <button class="btn btn-primary" onclick="openGradeModal('${
+                      submission._id
+                    }')">
+                      ${submission.grade ? "Update Grade" : "Grade"}
+                    </button>
+                  </td>
+                `;
+                submissionsList.appendChild(row);
+              });
+            }
+          }
+
+          if (!hasSubmissions) {
+            submissionsList.innerHTML =
+              "<tr><td colspan='6'>No submissions found for this course</td></tr>";
+          }
+        } catch (error) {
+          console.error("Error fetching submissions:", error);
+          alert("Failed to fetch submissions");
+        }
+      }
+
+      // Remove this duplicate function definition
+      // Open Grade Modal - single implementation
       function openGradeModal(submissionId) {
         const modal = document.getElementById("grade-modal");
         modal.style.display = "block";
-        modal.dataset.currentSubmissionId = submissionId;
+        modal.dataset.submissionId = submissionId;
+        console.log("Opening modal for submission:", submissionId);
       }
 
-      // Close Modal
+      // Close Modal - single implementation
       function closeModal() {
-        document.getElementById("grade-modal").style.display = "none";
+        const modal = document.getElementById("grade-modal");
+        modal.style.display = "none";
+        document.getElementById("grade-form").reset();
       }
 
-      // Submit Grade
+      // Alias for consistency
+      function closeGradeModal() {
+        closeModal();
+      }
+
+      // Remove all existing event listeners from the form
+      const gradeForm = document.getElementById("grade-form");
+      const newGradeForm = gradeForm.cloneNode(true);
+      gradeForm.parentNode.replaceChild(newGradeForm, gradeForm);
+
+      // Single event listener for grade submission
       document
         .getElementById("grade-form")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
 
-          const submissionId =
-            document.getElementById("grade-modal").dataset.currentSubmissionId;
-          const score = document.getElementById("assignment-score").value;
-          const feedback = document.getElementById("assignment-feedback").value;
+          const modal = document.getElementById("grade-modal");
+          const submissionId = modal.dataset.submissionId;
+          console.log("Submitting grade for submission:", submissionId);
+
+          if (!submissionId) {
+            alert("Error: Submission ID not found");
+            return;
+          }
+
+          const grade = document.getElementById("grade").value;
+          const feedback = document.getElementById("feedback").value;
 
           try {
             const response = await fetch(
-              `${BASE_URL}/teachers/submissions/${submissionId}/grade`,
+              `${BASE_URL}/assignment/grade/${submissionId}`,
               {
                 method: "POST",
                 headers: {
@@ -559,23 +654,62 @@
                     "accessToken"
                   )}`,
                 },
-                body: JSON.stringify({ score, feedback }),
+                body: JSON.stringify({ grade, feedback }),
               }
             );
 
-            if (response.ok) {
-              alert("Grade Submitted Successfully!");
-              fetchSubmissions();
-              closeModal();
-            } else {
-              const errorText = await response.text();
-              alert(`Error submitting grade: ${errorText}`);
+            if (!response.ok) {
+              throw new Error("Failed to submit grade");
             }
+
+            alert("Grade submitted successfully!");
+            closeModal();
+            fetchSubmissions(); // Refresh the submissions list
           } catch (error) {
             console.error("Error submitting grade:", error);
-            alert("Failed to submit grade. Please try again.");
+            alert("Failed to submit grade");
           }
         });
+
+      // Remove this duplicate event handler
+      // document
+      //   .getElementById("grade-form")
+      //   .addEventListener("submit", async (e) => {
+      //     e.preventDefault();
+      //
+      //     const submissionId =
+      //       document.getElementById("grade-modal").dataset.currentSubmissionId;
+      //     const score = document.getElementById("assignment-score").value;
+      //     const feedback = document.getElementById("assignment-feedback").value;
+      //
+      //     try {
+      //       const response = await fetch(
+      //         `${BASE_URL}/teachers/submissions/${submissionId}/grade`,
+      //         {
+      //           method: "POST",
+      //           headers: {
+      //             "Content-Type": "application/json",
+      //             Authorization: `Bearer ${localStorage.getItem(
+      //               "accessToken"
+      //             )}`,
+      //           },
+      //           body: JSON.stringify({ score, feedback }),
+      //         }
+      //       );
+      //
+      //       if (response.ok) {
+      //         alert("Grade Submitted Successfully!");
+      //         fetchSubmissions();
+      //         closeModal();
+      //       } else {
+      //         const errorText = await response.text();
+      //         alert(`Error submitting grade: ${errorText}`);
+      //       }
+      //     } catch (error) {
+      //       console.error("Error submitting grade:", error);
+      //       alert("Failed to submit grade. Please try again.");
+      //     }
+      //   });
 
       // Delete Assignment
       async function deleteAssignment(assignmentId) {

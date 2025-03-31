@@ -84,3 +84,56 @@ async function enrollInCourse(courseId) {
     alert(error.message || "Failed to send request.");
   }
 }
+document.addEventListener("DOMContentLoaded", async () => {
+  const lecturesContainer = document.getElementById("lectures-container");
+
+  try {
+    // Fetch enrolled courses (Assuming API exists)
+    const courseResponse = await fetch("/api/v1/courses/enrolled", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+
+    if (!courseResponse.ok) {
+      throw new Error("Failed to fetch enrolled courses");
+    }
+
+    const courses = await courseResponse.json();
+
+    for (const course of courses) {
+      // Fetch lectures for each enrolled course
+      const lectureResponse = await fetch(`/api/v1/lectures/${course._id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!lectureResponse.ok) {
+        throw new Error(`Failed to fetch lectures for ${course.title}`);
+      }
+
+      const lectures = await lectureResponse.json();
+
+      // Create course section
+      const courseSection = document.createElement("div");
+      courseSection.innerHTML = `<h3>${course.title}</h3>`;
+
+      // List lectures
+      lectures.forEach((lecture) => {
+        const lectureItem = document.createElement("div");
+        lectureItem.innerHTML = `
+          <p>${lecture.title} - <a href="${lecture.fileUrl}" target="_blank">Download</a></p>
+        `;
+        courseSection.appendChild(lectureItem);
+      });
+
+      lecturesContainer.appendChild(courseSection);
+    }
+  } catch (error) {
+    console.error(error);
+    lecturesContainer.innerHTML = "<p>Failed to load lectures.</p>";
+  }
+});

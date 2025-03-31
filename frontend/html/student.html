@@ -48,8 +48,8 @@
           <div class="card" id="manageCoursesCard">View Enrolled Courses</div>
 
           <div class="card">Attend Live Classes</div>
-          <div class="card">View & Download Notes</div>
-          <div class="card">Submit Assignments</div>
+          <div class="card" id="managenotes">View & Download Notes</div>
+          <div class="card" id="submitassignment">Submit Assignments</div>
           <div class="card">Ask Questions to Teachers</div>
           <div class="card">View Job Board</div>
         </div>
@@ -62,6 +62,14 @@
         .getElementById("manageCoursesCard")
         .addEventListener("click", () => {
           window.location.href = "manage-course-student.html"; // Redirect to course management page
+        });
+      document.getElementById("managenotes").addEventListener("click", () => {
+        window.location.href = "notes.html"; // Redirect to notes page
+      });
+      document
+        .getElementById("submitassignment")
+        .addEventListener("click", () => {
+          window.location.href = "assignment.html"; // Redirect to assignment page
         });
 
       // Sidebar toggle function
