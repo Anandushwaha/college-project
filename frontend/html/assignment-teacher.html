@@ -195,6 +195,16 @@
         <!-- Assignments List Section -->
         <div id="assignments-section" class="section">
           <h2>My Assignments</h2>
+
+          <!-- Add course filter dropdown -->
+          <div class="form-group" style="margin-bottom: 20px">
+            <label for="assignments-course-select">Filter by Course:</label>
+            <select id="assignments-course-select" class="form-control">
+              <option value="">All Courses</option>
+              <!-- Options will be populated dynamically -->
+            </select>
+          </div>
+
           <table class="assignment-list">
             <thead>
               <tr>
@@ -329,27 +339,61 @@
       const BASE_URL = "http://localhost:5000/api/v1"; // Configurable backend URL
 
       document.addEventListener("DOMContentLoaded", () => {
-        fetchCourses().then(() => {
-          const courseSelect = document.getElementById("course-select");
-          // Also populate the submissions course select
-          populateSubmissionsCourseSelect();
+        console.log("Page loaded, initializing...");
 
-          if (courseSelect.options.length > 1) {
-            const firstCourseId = courseSelect.options[1].value;
-            fetchAssignments(firstCourseId);
-          }
-        });
+        // Show assignments section by default
+        showSection("assignments");
+
+        fetchCourses()
+          .then((courses) => {
+            const courseSelect = document.getElementById("course-select");
+
+            // Populate the assignments filter dropdown
+            const assignmentsCourseSelect = document.getElementById(
+              "assignments-course-select"
+            );
+            assignmentsCourseSelect.innerHTML = `<option value="">All Courses</option>`;
+
+            courses.forEach((course) => {
+              const option = document.createElement("option");
+              option.value = course._id;
+              option.textContent = course.title;
+              assignmentsCourseSelect.appendChild(option);
+            });
+
+            // Also populate the submissions course select
+            populateSubmissionsCourseSelect();
+
+            if (courseSelect.options.length > 1) {
+              const firstCourseId = courseSelect.options[1].value;
+              console.log(
+                "Fetching assignments for initial course:",
+                firstCourseId
+              );
+              fetchAssignments(firstCourseId);
+
+              // Set the selected course in the dropdown
+              courseSelect.value = firstCourseId;
+            } else {
+              console.log("No courses available to fetch assignments");
+            }
+          })
+          .catch((error) => {
+            console.error("Error during initial page load:", error);
+          });
 
         // Add event listener to course select to trigger assignments fetch
         const courseSelect = document.getElementById("course-select");
         courseSelect.addEventListener("change", (event) => {
           const selectedCourseId = event.target.value;
+          console.log("Course selection changed to:", selectedCourseId);
           if (selectedCourseId) {
             fetchAssignments(selectedCourseId);
           } else {
             // Clear assignments list if no course is selected
             const assignmentsList = document.getElementById("assignments-list");
             assignmentsList.innerHTML = "";
+            console.log("Cleared assignments list - no course selected");
           }
         });
 
@@ -358,14 +402,37 @@
           "submissions-course-select"
         );
         submissionsCourseSelect.addEventListener("change", () => {
+          console.log("Submissions course select changed");
           fetchSubmissions();
+        });
+
+        // Add event listener for assignments course filter
+        const assignmentsCourseSelect = document.getElementById(
+          "assignments-course-select"
+        );
+        assignmentsCourseSelect.addEventListener("change", (event) => {
+          const selectedCourseId = event.target.value;
+          console.log(
+            "Assignments filter changed to course:",
+            selectedCourseId
+          );
+
+          if (selectedCourseId) {
+            // If a specific course is selected, fetch assignments for that course
+            fetchAssignments(selectedCourseId);
+          } else {
+            // If "All Courses" is selected, fetch assignments for all courses
+            fetchAllAssignments();
+          }
         });
       });
 
       // Function to populate the submissions course select
       async function populateSubmissionsCourseSelect() {
+        console.log("Populating submissions course select");
         try {
           const courses = await fetchCoursesData();
+          console.log("Courses for submissions dropdown:", courses.length);
           const submissionsCourseSelect = document.getElementById(
             "submissions-course-select"
           );
@@ -384,23 +451,34 @@
 
       // Helper function to fetch courses data
       async function fetchCoursesData() {
+        console.log("Fetching courses data");
         const response = await fetch(`${BASE_URL}/courses/teacher`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch courses: ${response.statusText}`);
+        }
         return await response.json();
       }
 
       // Fetch Courses and Populate Dropdown
       async function fetchCourses() {
+        console.log("Fetching courses for main dropdown");
         try {
           const response = await fetch(`${BASE_URL}/courses/teacher`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
             },
           });
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch courses: ${response.statusText}`);
+          }
+
           const courses = await response.json();
+          console.log("Courses loaded:", courses.length);
           const courseSelect = document.getElementById("course-select");
 
           courseSelect.innerHTML = `<option value="">Select Course</option>`;
@@ -410,16 +488,23 @@
             option.textContent = course.title;
             courseSelect.appendChild(option);
           });
+
+          return courses;
         } catch (error) {
           console.error("Error fetching courses:", error);
           alert("Failed to fetch courses. Please check your connection.");
+          throw error; // Re-throw for proper promise chain handling
         }
       }
 
       // Fetch Assignments and Display in Table
       async function fetchAssignments(courseId) {
-        if (!courseId) return; // Added guard clause
+        if (!courseId) {
+          console.warn("fetchAssignments called without a courseId");
+          return; // Added guard clause
+        }
 
+        console.log("Attempting to fetch assignments for course:", courseId);
         try {
           const response = await fetch(
             `${BASE_URL}/assignment/course/${courseId}`,
@@ -437,8 +522,15 @@
           }
 
           const assignments = await response.json();
+          console.log("Assignments received:", assignments.length);
           const assignmentsList = document.getElementById("assignments-list");
           assignmentsList.innerHTML = "";
+
+          if (assignments.length === 0) {
+            assignmentsList.innerHTML =
+              "<tr><td colspan='4'>No assignments found for this course</td></tr>";
+            return;
+          }
 
           // Fetch course details to get course title
           const coursesResponse = await fetch(`${BASE_URL}/courses/teacher`, {
@@ -461,7 +553,6 @@
         <td>${assignment.title}</td>
         <td>${new Date(assignment.dueDate).toLocaleDateString()}</td>
         <td>
-        
           <button class="btn btn-danger" onclick="deleteAssignment('${
             assignment._id
           }')">Delete</button>
@@ -471,11 +562,16 @@
           });
         } catch (error) {
           console.error("Error fetching assignments:", error);
+          const assignmentsList = document.getElementById("assignments-list");
+          assignmentsList.innerHTML =
+            "<tr><td colspan='4'>Error loading assignments. Please try again.</td></tr>";
           alert("Failed to fetch assignments. Please check your connection.");
         }
       }
+
       // Add this to your existing JavaScript
       async function fetchSubmissions() {
+        console.log("Fetching submissions");
         try {
           // Get the submissions list element first
           const submissionsList = document.getElementById("submissions-list");
@@ -507,6 +603,7 @@
           }
 
           const assignments = await assignmentsResponse.json();
+          console.log("Assignments for submissions:", assignments.length);
           submissionsList.innerHTML = "";
 
           if (assignments.length === 0) {
@@ -519,6 +616,9 @@
 
           // For each assignment, fetch its submissions
           for (const assignment of assignments) {
+            console.log(
+              `Fetching submissions for assignment: ${assignment._id}`
+            );
             const submissionsResponse = await fetch(
               `${BASE_URL}/assignment/submissions/${assignment._id}`,
               {
@@ -530,19 +630,22 @@
               }
             );
 
-            if (!submissionsResponse.ok) continue;
+            if (!submissionsResponse.ok) {
+              console.warn(
+                `Failed to fetch submissions for assignment: ${assignment._id}`
+              );
+              continue;
+            }
 
             const submissions = await submissionsResponse.json();
-            console.log("Submissions data:", submissions);
+            console.log(
+              `Received ${submissions.length} submissions for assignment: ${assignment.title}`
+            );
 
             if (submissions.length > 0) {
               hasSubmissions = true;
 
               submissions.forEach((submission) => {
-                console.log("Individual submission:", submission);
-                // Check the structure of student data
-                console.log("Student data:", submission.student);
-
                 // Get student name with better fallback handling
                 let studentName = "Unknown Student";
                 if (submission.student) {
@@ -567,23 +670,21 @@
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                  <td>${studentName}</td>
-                  <td>${assignment.title || "Unknown Assignment"}</td>
-                  <td>${new Date(
-                    submission.submittedAt
-                  ).toLocaleDateString()}</td>
-                  <td><a href="${
-                    submission.fileUrl
-                  }" target="_blank" class="btn btn-secondary">View File</a></td>
-                  <td>${submission.grade || "Not graded"}</td>
-                  <td>
-                    <button class="btn btn-primary" onclick="openGradeModal('${
-                      submission._id
-                    }')">
-                      ${submission.grade ? "Update Grade" : "Grade"}
-                    </button>
-                  </td>
-                `;
+            <td>${studentName}</td>
+            <td>${assignment.title || "Unknown Assignment"}</td>
+            <td>${new Date(submission.submittedAt).toLocaleDateString()}</td>
+            <td><a href="${
+              submission.fileUrl
+            }" target="_blank" class="btn btn-secondary">View File</a></td>
+            <td>${submission.grade || "Not graded"}</td>
+            <td>
+              <button class="btn btn-primary" onclick="openGradeModal('${
+                submission._id
+              }')">
+                ${submission.grade ? "Update Grade" : "Grade"}
+              </button>
+            </td>
+          `;
                 submissionsList.appendChild(row);
               });
             }
@@ -595,11 +696,13 @@
           }
         } catch (error) {
           console.error("Error fetching submissions:", error);
-          alert("Failed to fetch submissions");
+          const submissionsList = document.getElementById("submissions-list");
+          submissionsList.innerHTML =
+            "<tr><td colspan='6'>Error loading submissions. Please try again.</td></tr>";
+          alert("Failed to fetch submissions: " + error.message);
         }
       }
 
-      // Remove this duplicate function definition
       // Open Grade Modal - single implementation
       function openGradeModal(submissionId) {
         const modal = document.getElementById("grade-modal");
@@ -671,66 +774,30 @@
           }
         });
 
-      // Remove this duplicate event handler
-      // document
-      //   .getElementById("grade-form")
-      //   .addEventListener("submit", async (e) => {
-      //     e.preventDefault();
-      //
-      //     const submissionId =
-      //       document.getElementById("grade-modal").dataset.currentSubmissionId;
-      //     const score = document.getElementById("assignment-score").value;
-      //     const feedback = document.getElementById("assignment-feedback").value;
-      //
-      //     try {
-      //       const response = await fetch(
-      //         `${BASE_URL}/teachers/submissions/${submissionId}/grade`,
-      //         {
-      //           method: "POST",
-      //           headers: {
-      //             "Content-Type": "application/json",
-      //             Authorization: `Bearer ${localStorage.getItem(
-      //               "accessToken"
-      //             )}`,
-      //           },
-      //           body: JSON.stringify({ score, feedback }),
-      //         }
-      //       );
-      //
-      //       if (response.ok) {
-      //         alert("Grade Submitted Successfully!");
-      //         fetchSubmissions();
-      //         closeModal();
-      //       } else {
-      //         const errorText = await response.text();
-      //         alert(`Error submitting grade: ${errorText}`);
-      //       }
-      //     } catch (error) {
-      //       console.error("Error submitting grade:", error);
-      //       alert("Failed to submit grade. Please try again.");
-      //     }
-      //   });
-
       // Delete Assignment
       async function deleteAssignment(assignmentId) {
         if (!confirm("Are you sure you want to delete this assignment?"))
           return;
 
+        console.log("Deleting assignment:", assignmentId);
         try {
           const response = await fetch(
-            `http://localhost:5000/api/v1/assignment/${assignmentId}`, // ✅ Corrected API URL
+            `${BASE_URL}/assignment/${assignmentId}`,
             {
               method: "DELETE",
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                "Content-Type": "application/json", // Optional but good practice
+                "Content-Type": "application/json",
               },
             }
           );
 
           if (response.ok) {
             alert("Assignment Deleted Successfully!");
-            fetchAssignments(); // Refresh the assignments list
+            // Get the current selected course ID
+            const courseId = document.getElementById("course-select").value;
+            console.log("Refreshing assignments for course:", courseId);
+            fetchAssignments(courseId); // Refresh the assignments list
           } else {
             const errorData = await response.json(); // Try parsing as JSON
             alert(
@@ -745,10 +812,59 @@
         }
       }
 
-      // Edit Assignment (Redirect to Edit Page)
-      function editAssignment(assignmentId) {
-        window.location.href = `/edit-assignment.html?id=${assignmentId}`;
-      }
+      // Create Assignment Form Submission
+      document
+        .getElementById("create-assignment-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const courseId = document.getElementById("course-select").value;
+          const title = document.getElementById("assignment-title").value;
+          const description = document.getElementById(
+            "assignment-description"
+          ).value;
+          const dueDate = document.getElementById("due-date").value;
+          // Get only the first file instead of all files
+          const file = document.getElementById("assignment-files").files[0];
+
+          console.log("Creating assignment for course:", courseId);
+          console.log("Assignment details:", { title, dueDate });
+
+          const formData = new FormData();
+          formData.append("courseId", courseId);
+          formData.append("title", title);
+          formData.append("description", description);
+          formData.append("dueDate", dueDate);
+
+          // Change from 'files' to 'file' to match backend expectation
+          if (file) {
+            formData.append("file", file);
+            console.log("Including file:", file.name);
+          }
+
+          try {
+            const response = await fetch(`${BASE_URL}/assignment/create`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              },
+              body: formData,
+            });
+
+            if (response.ok) {
+              alert("Assignment Created Successfully!");
+              console.log("Assignment created, refreshing list");
+              fetchAssignments(courseId); // Refresh the assignments list
+              document.getElementById("create-assignment-form").reset();
+              showSection("assignments"); // Navigate back to assignments list
+            } else {
+              const errorText = await response.text();
+              alert(`Error creating assignment: ${errorText}`);
+            }
+          } catch (error) {
+            console.error("Error creating assignment:", error);
+            alert("Failed to create assignment. Please try again.");
+          }
+        });
     </script>
   </body>
 </html>
