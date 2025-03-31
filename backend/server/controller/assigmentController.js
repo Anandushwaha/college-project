@@ -90,12 +90,12 @@ export const submitAssignment = async (req, res) => {
     }
 
     // ✅ Ensure student is enrolled in the course
-    const course = await Course.findById(assignment.courseId);
-    if (!course.studentsEnrolled.includes(studentId)) {
-      return res
-        .status(403)
-        .json({ message: "You are not enrolled in this course" });
-    }
+    // const course = await Course.findById(assignment.courseId);
+    // if (!course.studentsEnrolled.includes(studentId)) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: "You are not enrolled in this course" });
+    // }
 
     // ✅ Create a new submission
     const submission = new Submission({
