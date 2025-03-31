@@ -102,6 +102,7 @@ export const submitAssignment = async (req, res) => {
       assignmentId,
       studentId,
       fileUrl,
+      status: "Submitted",
     });
 
     await submission.save();

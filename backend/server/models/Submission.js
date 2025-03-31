@@ -13,6 +13,11 @@ const submissionSchema = new mongoose.Schema({
   },
   fileUrl: { type: String, required: true },
   submittedAt: { type: Date, default: Date.now },
+  status: {
+    type: String,
+    enum: ["Not Submitted", "Submitted"],
+    default: "Not Submitted",
+  }, // New field
   grade: { type: Number, default: null }, // Null until graded
   feedback: { type: String, default: "" },
 });
