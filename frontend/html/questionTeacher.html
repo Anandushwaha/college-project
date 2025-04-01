@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Dashboard</title>
+    <!-- Updated Socket.io client library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+      }
+
+      .teacher-dashboard {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h2 {
+        text-align: center;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      .questions-container {
+        margin-bottom: 30px;
+      }
+
+      .question-list {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .question-item {
+        padding: 15px;
+        margin: 15px 0;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+      }
+
+      .answer-section {
+        margin-top: 20px;
+      }
+
+      textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+      }
+
+      button {
+        padding: 10px 15px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      .connection-status {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+      }
+
+      .connected {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      .disconnected {
+        background-color: #f44336;
+        color: white;
+      }
+
+      .answers {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #f0f8ff;
+        border-radius: 5px;
+      }
+
+      .active-question {
+        border: 2px solid #4caf50;
+        background-color: #e8f5e9;
+      }
+
+      .no-questions {
+        text-align: center;
+        padding: 20px;
+        color: #777;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="connectionStatus" class="connection-status disconnected">
+      Disconnected
+    </div>
+
+    <div class="teacher-dashboard">
+      <h2>Teacher Dashboard</h2>
+      <div class="questions-container">
+        <h3>Student Questions</h3>
+        <div id="question-list" class="question-list">
+          <div class="no-questions">Waiting for student questions...</div>
+        </div>
+      </div>
+
+      <div class="answer-section">
+        <h3>Answer a Question</h3>
+        <textarea
+          id="answer-text"
+          placeholder="Select a question to answer..."
+          rows="5"
+          disabled
+        ></textarea>
+        <button id="submit-answer" disabled>Submit Answer</button>
+      </div>
+    </div>
+
+    <script>
+      // DOM elements
+      const questionList = document.getElementById("question-list");
+      const submitAnswerButton = document.getElementById("submit-answer");
+      const answerTextArea = document.getElementById("answer-text");
+      const connectionStatus = document.getElementById("connectionStatus");
+
+      // This will hold the ID of the current question that is being answered
+      let currentQuestionId = null;
+
+      // Connect to the backend server explicitly
+      let socket;
+      try {
+        // Connect to your backend server explicitly
+        socket = io("http://localhost:5000", {
+          withCredentials: true, // Important for CORS with credentials
+        });
+
+        // Socket connection events
+        socket.on("connect", () => {
+          console.log("Socket connected");
+          connectionStatus.textContent = "Connected";
+          connectionStatus.className = "connection-status connected";
+
+          // Enable interface elements
+          toggleInterface(true);
+        });
+
+        socket.on("disconnect", () => {
+          console.log("Socket disconnected");
+          connectionStatus.textContent = "Disconnected";
+          connectionStatus.className = "connection-status disconnected";
+
+          // Disable interface elements
+          toggleInterface(false);
+        });
+
+        socket.on("connect_error", (error) => {
+          console.error("Connection error:", error);
+          connectionStatus.textContent = "Connection Error";
+          connectionStatus.className = "connection-status disconnected";
+
+          // Disable interface elements
+          toggleInterface(false);
+        });
+
+        // Listen for all questions from the backend (real-time)
+        socket.on("all-questions", (questions) => {
+          displayQuestions(questions);
+        });
+
+        // Listen for new questions
+        socket.on("new-question", (question) => {
+          // Remove "no questions" message if it exists
+          const noQuestionsMsg = questionList.querySelector(".no-questions");
+          if (noQuestionsMsg) {
+            noQuestionsMsg.remove();
+          }
+          displayQuestion(question);
+        });
+
+        // Listen for new answers (real-time)
+        socket.on("new-answer", (answer) => {
+          updateAnswerInUI(answer);
+        });
+      } catch (error) {
+        console.error("Socket.io initialization failed:", error);
+        connectionStatus.textContent = "Connection Failed";
+        connectionStatus.className = "connection-status disconnected";
+      }
+
+      // Function to enable/disable interface elements based on connection status
+      function toggleInterface(connected) {
+        if (!connected) {
+          submitAnswerButton.disabled = true;
+          answerTextArea.disabled = true;
+          answerTextArea.placeholder = "Cannot connect to server...";
+        }
+      }
+
+      // Display all questions
+      function displayQuestions(questions) {
+        if (!questions || questions.length === 0) {
+          questionList.innerHTML =
+            '<div class="no-questions">No questions yet</div>';
+          return;
+        }
+
+        questionList.innerHTML = ""; // Clear the list before rendering
+
+        questions.forEach((question) => {
+          displayQuestion(question);
+        });
+      }
+
+      // Display a single question
+      function displayQuestion(question) {
+        const questionItem = document.createElement("div");
+        questionItem.classList.add("question-item");
+        questionItem.dataset.questionId = question._id; // Store question ID in dataset for easy access
+
+        const hasAnswers = question.answers && question.answers.length > 0;
+
+        questionItem.innerHTML = `
+          <strong>${question.studentName} asked:</strong> ${
+          question.question
+        } <br>
+          <em>Date Asked: ${new Date(
+            question.questionDate
+          ).toLocaleString()}</em>
+          <div class="answers">
+            ${
+              hasAnswers
+                ? question.answers
+                    .map(
+                      (ans) => `
+                    <p><strong>${ans.teacherName}</strong>: ${
+                        ans.teacherAnswer
+                      }</p>
+                    <em>Date Answered: ${new Date(
+                      ans.answerDate
+                    ).toLocaleString()}</em>
+                  `
+                    )
+                    .join("")
+                : "<p><em>No answers yet</em></p>"
+            }
+          </div>
+          <button class="answer-btn" data-id="${question._id}">
+            ${hasAnswers ? "Add another answer" : "Answer this question"}
+          </button>
+        `;
+
+        questionList.appendChild(questionItem);
+
+        // Add event listener to the answer button
+        const answerBtn = questionItem.querySelector(".answer-btn");
+        answerBtn.addEventListener("click", function () {
+          startAnswering(this.dataset.id);
+        });
+      }
+
+      // Handle starting the answer process
+      function startAnswering(questionId) {
+        // Remove active state from previously selected question
+        const previousActive = questionList.querySelector(".active-question");
+        if (previousActive) {
+          previousActive.classList.remove("active-question");
+        }
+
+        // Add active state to current question
+        const currentQuestion = questionList.querySelector(
+          `[data-question-id="${questionId}"]`
+        );
+        if (currentQuestion) {
+          currentQuestion.classList.add("active-question");
+        }
+
+        currentQuestionId = questionId;
+        answerTextArea.disabled = false;
+        submitAnswerButton.disabled = false;
+        answerTextArea.value = "";
+        answerTextArea.focus();
+        answerTextArea.placeholder = `Type your answer for question #${questionId}...`;
+      }
+
+      // Submit the teacher's answer
+      submitAnswerButton.addEventListener("click", () => {
+        const answerText = answerTextArea.value.trim();
+
+        if (!currentQuestionId || !answerText) {
+          alert("Please select a question and type an answer.");
+          return;
+        }
+
+        if (socket && socket.connected) {
+          const answer = {
+            questionId: currentQuestionId,
+            teacherAnswer: answerText,
+            teacherName: "Teacher Name", // Replace with actual teacher's name
+            answerDate: new Date(),
+          };
+
+          // Emit the new answer to the backend
+          socket.emit("new-answer", answer);
+
+          // Clear the answer text area
+          answerTextArea.value = "";
+          answerTextArea.placeholder = "Select a question to answer...";
+          answerTextArea.disabled = true;
+          submitAnswerButton.disabled = true;
+
+          // Remove active state
+          const activeQuestion = questionList.querySelector(".active-question");
+          if (activeQuestion) {
+            activeQuestion.classList.remove("active-question");
+          }
+
+          currentQuestionId = null;
+        } else {
+          alert("Cannot submit answer: Not connected to server");
+        }
+      });
+
+      // Function to update answers in UI (after teacher answers)
+      // Function to update answers in UI (after teacher answers)
+      function updateAnswerInUI(answer) {
+        const questionItem = document.querySelector(
+          `.question-item[data-question-id="${answer.questionId}"]`
+        );
+
+        if (questionItem) {
+          const answersDiv = questionItem.querySelector(".answers");
+
+          // This is the corrected part - don't replace all answers, just add the new one
+          const newAnswerElement = document.createElement("div");
+          newAnswerElement.innerHTML = `
+      <p><strong>${answer.teacherName}</strong>: ${answer.teacherAnswer}</p>
+      <em>Date Answered: ${new Date(answer.answerDate).toLocaleString()}</em>
+    `;
+
+          // Check if there's a "No answers yet" message
+          const noAnswersMsg = answersDiv.querySelector("p > em");
+          if (noAnswersMsg && noAnswersMsg.textContent === "No answers yet") {
+            // Replace the empty message
+            answersDiv.innerHTML = "";
+          }
+
+          // Append the new answer
+          answersDiv.appendChild(newAnswerElement);
+
+          // Update the button text
+          const answerBtn = questionItem.querySelector(".answer-btn");
+          if (answerBtn) {
+            answerBtn.textContent = "Add another answer";
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

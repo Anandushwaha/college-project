@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job Search</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        text-align: center;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        color: #333;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      input,
+      button {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+
+      button {
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      #loading {
+        font-size: 18px;
+        margin-top: 20px;
+        color: #007bff;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .job-card {
+        background: #fff;
+        margin-top: 10px;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        text-align: left;
+      }
+
+      .job-card h3 {
+        margin: 0;
+        color: #333;
+      }
+
+      .job-card p {
+        margin: 5px 0;
+        color: #666;
+      }
+
+      .job-card a {
+        display: inline-block;
+        margin-top: 5px;
+        color: #007bff;
+        text-decoration: none;
+      }
+
+      .job-card a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <button><a href="student.html">asadwsw</a></button>
+    <div class="container">
+      <h1>Job Search</h1>
+      <form id="jobSearchForm">
+        <input
+          type="text"
+          id="jobTitle"
+          placeholder="Enter job title..."
+          required
+        />
+        <input
+          type="text"
+          id="jobLocation"
+          placeholder="Enter location (Optional)"
+        />
+        <input type="text" id="companyName" placeholder="Enter company name" />
+        <button type="submit">Search Jobs</button>
+      </form>
+
+      <div id="loading" class="hidden">🔄 Fetching jobs...</div>
+      <div id="jobResults"></div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const jobSearchForm = document.getElementById("jobSearchForm");
+        const jobTitleInput = document.getElementById("jobTitle");
+        const jobLocationInput = document.getElementById("jobLocation");
+        const jobResults = document.getElementById("jobResults");
+        const loadingIndicator = document.getElementById("loading");
+        const companyNameInput = document.getElementById("companyName");
+
+        jobSearchForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const title = jobTitleInput.value.trim();
+          const location = jobLocationInput.value.trim();
+          const company = companyNameInput.value.trim();
+          console.log(title, location, company);
+
+          if (!title) {
+            alert("Please enter a job title.");
+            return;
+          }
+
+          jobResults.innerHTML = "";
+          loadingIndicator.classList.remove("hidden");
+
+          try {
+            const response = await fetch(
+              "http://localhost:5000/api/v1/jobs/search",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ title, location, company }),
+              }
+            );
+
+            if (!response.ok) throw new Error("Failed to fetch jobs.");
+
+            const data = await response.json();
+            displayJobs(data.jobs);
+          } catch (error) {
+            console.error("Error fetching jobs:", error);
+            jobResults.innerHTML =
+              "<p style='color: red;'>Error fetching jobs. Try again later.</p>";
+          } finally {
+            loadingIndicator.classList.add("hidden");
+          }
+        });
+
+        function displayJobs(jobs) {
+          if (jobs.length === 0) {
+            jobResults.innerHTML = "<p>No jobs found. Try another search.</p>";
+            return;
+          }
+
+          jobs.forEach((job) => {
+            const jobCard = document.createElement("div");
+            jobCard.classList.add("job-card");
+
+            jobCard.innerHTML = `
+                  <h3>${job.title}</h3>
+                  <p><strong>Company:</strong> ${job.company}</p>
+                  <p><strong>Location:</strong> ${job.location}</p>
+                  <a href="${job.url}" target="_blank">View Job</a>
+                  <p><small>Source: ${job.source}</small></p>
+              `;
+
+            jobResults.appendChild(jobCard);
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

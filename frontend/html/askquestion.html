@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Q&A Interface</title>
+    <!-- Load Socket.io client from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    <style>
+      /* Floating Button Styling (Bottom-right corner) */
+      .floating-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        background-color: #4caf50;
+        color: white;
+        border-radius: 50%;
+        font-size: 24px;
+        text-align: center;
+        line-height: 50px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .floating-btn:hover {
+        background-color: #45a049;
+      }
+
+      /* Modal Styling */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        width: 400px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .close-btn {
+        font-size: 30px;
+        color: #333;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+      }
+
+      textarea {
+        width: 100%;
+        height: 150px;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin-bottom: 15px;
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .submit-btn:hover {
+        background-color: #45a049;
+      }
+
+      /* Questions List Styling */
+      .question-list {
+        padding: 20px;
+      }
+
+      .question-item {
+        margin-bottom: 30px;
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .question-item .question {
+        background-color: #e8f5e9;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+      }
+
+      .question-item .answer {
+        background-color: #f1f8e9;
+        padding: 15px;
+        border-radius: 6px;
+      }
+
+      .timestamp {
+        font-size: 12px;
+        color: #777;
+      }
+
+      .connection-status {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+      }
+
+      .connected {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      .disconnected {
+        background-color: #f44336;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Connection Status Indicator -->
+    <div id="connectionStatus" class="connection-status disconnected">
+      Disconnected
+    </div>
+
+    <!-- Floating Button (Bottom Right Corner) -->
+    <div class="floating-btn" id="askQuestionBtn">
+      <span>+</span>
+    </div>
+
+    <!-- Modal for Asking a Question -->
+    <div class="modal" id="askModal">
+      <div class="modal-content">
+        <span class="close-btn" id="closeModalBtn">&times;</span>
+        <h2>Ask a Question</h2>
+        <form id="askForm">
+          <textarea
+            id="studentQuestion"
+            placeholder="Type your question..."
+            required
+          ></textarea>
+          <button type="submit" class="submit-btn">Submit Question</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Questions List -->
+    <div id="questionList" class="question-list">
+      <!-- Questions will be dynamically added here -->
+    </div>
+
+    <script>
+      // DOM elements
+      const askQuestionBtn = document.getElementById("askQuestionBtn");
+      const askModal = document.getElementById("askModal");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      const askForm = document.getElementById("askForm");
+      const studentQuestionInput = document.getElementById("studentQuestion");
+      const questionList = document.getElementById("questionList");
+      const connectionStatus = document.getElementById("connectionStatus");
+
+      // Modal functionality - independent of Socket.io
+      askQuestionBtn.addEventListener("click", () => {
+        console.log("Button clicked!"); // Debugging line
+        askModal.style.display = "flex";
+      });
+
+      // Close Modal
+      closeModalBtn.addEventListener("click", () => {
+        askModal.style.display = "none";
+      });
+
+      // Also close modal if user clicks outside of it
+      window.addEventListener("click", (e) => {
+        if (e.target === askModal) {
+          askModal.style.display = "none";
+        }
+      });
+
+      // Socket.io Client - connect to the backend explicitly
+      let socket;
+      try {
+        // Connect to your backend server explicitly
+        socket = io("http://localhost:5000", {
+          withCredentials: true, // Important for CORS with credentials
+        });
+
+        // Socket connection events
+        socket.on("connect", () => {
+          console.log("Socket connected");
+          connectionStatus.textContent = "Connected";
+          connectionStatus.className = "connection-status connected";
+        });
+
+        socket.on("disconnect", () => {
+          console.log("Socket disconnected");
+          connectionStatus.textContent = "Disconnected";
+          connectionStatus.className = "connection-status disconnected";
+        });
+
+        socket.on("connect_error", (error) => {
+          console.error("Connection error:", error);
+          connectionStatus.textContent = "Connection Error";
+          connectionStatus.className = "connection-status disconnected";
+        });
+
+        // Listen for new questions from Socket.io
+        socket.on("new-question", (data) => {
+          addQuestionToUI(data);
+        });
+
+        // Listen for new answers from Socket.io
+        socket.on("new-answer", (data) => {
+          updateAnswerInUI(data);
+        });
+
+        // Listen for all questions when connecting
+        socket.on("all-questions", (questions) => {
+          // Clear the list first
+          questionList.innerHTML = "";
+
+          // Add each question to the UI
+          questions.forEach((question) => {
+            addQuestionToUI(question);
+          });
+        });
+      } catch (error) {
+        console.error("Socket.io initialization failed:", error);
+        connectionStatus.textContent = "Connection Failed";
+        connectionStatus.className = "connection-status disconnected";
+      }
+
+      // Submit Question (Student asks a question)
+      askForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const studentQuestion = studentQuestionInput.value.trim();
+        const studentName = "Student Name"; // Replace with actual student name
+
+        if (studentQuestion) {
+          const questionData = {
+            question: studentQuestion,
+            studentName: studentName,
+          };
+
+          if (socket && socket.connected) {
+            // Emit the question via Socket.io to the server
+            socket.emit("new-question", questionData);
+
+            // Clear input field after submission
+            studentQuestionInput.value = "";
+            askModal.style.display = "none";
+          } else {
+            alert("Cannot submit question: Not connected to server");
+            console.error("Socket not connected, cannot send question");
+          }
+        }
+      });
+
+      // Function to add a question to the UI
+      function addQuestionToUI(questionData) {
+        const {
+          _id,
+          question,
+          studentName,
+          questionDate,
+          answers = [],
+        } = questionData;
+
+        const questionItem = document.createElement("div");
+        questionItem.classList.add("question-item");
+        questionItem.dataset.questionId = _id;
+
+        // Format the question
+        questionItem.innerHTML = `
+          <div class="question">
+            <p><strong>${studentName}:</strong> ${question}</p>
+            <p class="timestamp">Asked on: ${new Date(
+              questionDate
+            ).toLocaleString()}</p>
+          </div>
+          <div class="answers">
+            ${
+              answers.length > 0
+                ? answers
+                    .map(
+                      (ans) => `
+                  <div class="answer">
+                    <p><strong>${ans.teacherName}:</strong> ${
+                        ans.teacherAnswer
+                      }</p>
+                    <p class="timestamp">Answered on: ${new Date(
+                      ans.answerDate
+                    ).toLocaleString()}</p>
+                  </div>
+                `
+                    )
+                    .join("")
+                : `<div class="answer">
+                  <p><em>Waiting for teacher response...</em></p>
+                </div>`
+            }
+          </div>
+        `;
+
+        questionList.appendChild(questionItem);
+      }
+
+      // Function to update an answer in the UI
+      // Function to update an answer in the UI
+      function updateAnswerInUI(answerData) {
+        const { questionId, teacherName, teacherAnswer, answerDate } =
+          answerData;
+
+        const questionItem = document.querySelector(
+          `.question-item[data-question-id="${questionId}"]`
+        );
+
+        if (questionItem) {
+          const answersDiv = questionItem.querySelector(".answers");
+
+          // Check if there's a waiting message
+          const waitingMsg = answersDiv.querySelector("p > em");
+          if (
+            waitingMsg &&
+            waitingMsg.textContent === "Waiting for teacher response..."
+          ) {
+            // Clear the "waiting" message before adding the first answer
+            answersDiv.innerHTML = "";
+          }
+
+          // Create a new answer element
+          const newAnswerElement = document.createElement("div");
+          newAnswerElement.className = "answer";
+          newAnswerElement.innerHTML = `
+      <p><strong>${teacherName}:</strong> ${teacherAnswer}</p>
+      <p class="timestamp">Answered on: ${new Date(
+        answerDate
+      ).toLocaleString()}</p>
+    `;
+
+          // Append the new answer
+          answersDiv.appendChild(newAnswerElement);
+        }
+      }
+    </script>
+  </body>
+</html>

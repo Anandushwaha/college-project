@@ -228,7 +228,7 @@
             <div class="card-icon">📝</div>
             Assignments & Grading
           </div>
-          <div class="card">
+          <div class="card" id="question">
             <div class="card-icon">💬</div>
             Student Queries & Discussions
           </div>
@@ -252,6 +252,9 @@
         .addEventListener("click", () => {
           window.location.href = "manage-courses.html"; // Redirect to course management page
         });
+      document.getElementById("question").addEventListener("click", () => {
+        window.location.href = "questionTeacher.html"; // Redirect to course management page
+      });
       document
         .getElementById("Upload-assignment")
         .addEventListener("click", () => {

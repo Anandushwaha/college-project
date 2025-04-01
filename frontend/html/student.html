@@ -50,8 +50,8 @@
           <div class="card">Attend Live Classes</div>
           <div class="card" id="managenotes">View & Download Notes</div>
           <div class="card" id="submitassignment">Submit Assignments</div>
-          <div class="card">Ask Questions to Teachers</div>
-          <div class="card">View Job Board</div>
+          <div class="card" id="question">Ask Questions to Teachers</div>
+          <div class="card" id="job">View Job Board</div>
         </div>
       </main>
     </div>
@@ -63,8 +63,14 @@
         .addEventListener("click", () => {
           window.location.href = "manage-course-student.html"; // Redirect to course management page
         });
+      document.getElementById("question").addEventListener("click", () => {
+        window.location.href = "askquestion.html"; // Redirect to course management page
+      });
       document.getElementById("managenotes").addEventListener("click", () => {
         window.location.href = "notes.html"; // Redirect to notes page
+      });
+      document.getElementById("job").addEventListener("click", () => {
+        window.location.href = "job.html"; // Redirect to course management page
       });
       document
         .getElementById("submitassignment")
