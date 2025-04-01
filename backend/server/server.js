@@ -8,6 +8,7 @@ import authMiddleware from "./middleware/authMiddleware.js";
 import lectureRoutes from "./routes/lectureRoutes.js";
 import Assignment from "./routes/assignmentRoutes.js";
 import Announcement from "./routes/announcementRoutes.js";
+import jobRoute from "./routes/jobRoute.js";
 dotenv.config();
 connectDB();
 
@@ -29,5 +30,6 @@ app.use("/api/v1/auth", authRoute); // Mount the auth routes
 app.use("/api/v1/lectures", lectureRoutes);
 app.use("/api/v1/assignment", Assignment);
 app.use("/api/v1/announcements", Announcement);
+app.use("/api/v1/jobs", jobRoute);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
