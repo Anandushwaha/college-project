@@ -237,5 +237,27 @@ router.post("/enroll/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Server Error", error });
   }
 });
+router.post("/create-room", async (req, res) => {
+  try {
+    const { courseId } = req.body; // Get course ID from request
+    const response = await axios.post(
+      "https://api.daily.co/v1/rooms",
+      { name: `room-${Date.now()}`, privacy: "public" },
+      { headers: { Authorization: `Bearer ${DAILY_API_KEY}` } }
+    );
+
+    if (!response.data.url) {
+      throw new Error("Daily.co API did not return a URL");
+    }
+
+    // Store meeting URL in the course document
+    await Course.findByIdAndUpdate(courseId, { meetingUrl: response.data.url });
+
+    res.json({ roomUrl: response.data.url });
+  } catch (error) {
+    console.error("Error creating room:", error.message);
+    res.status(500).json({ error: "Failed to create room" });
+  }
+});
 
 export default router;

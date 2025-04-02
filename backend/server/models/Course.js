@@ -20,6 +20,7 @@ const CourseSchema = new mongoose.Schema(
         createdAt: { type: Date, default: Date.now },
       },
     ],
+    meetingUrl: String,
   },
   { timestamps: true }
 );

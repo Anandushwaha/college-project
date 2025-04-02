@@ -55,6 +55,8 @@
         </div>
       </main>
     </div>
+    <h2>Join Live Class</h2>
+    <button id="joinCallButton" style="display: none">Join Video Call</button>
 
     <script src="../js/script.js"></script>
     <script>
@@ -105,6 +107,28 @@
           }
         }
       });
+      async function fetchMeetingLink() {
+        try {
+          const response = await fetch(
+            "http://localhost:5000/api/video/get-room"
+          );
+          const data = await response.json();
+
+          if (data.roomUrl) {
+            const joinButton = document.getElementById("joinCallButton");
+            joinButton.href = data.roomUrl;
+            joinButton.style.display = "block";
+            joinButton.onclick = () => (window.location.href = data.roomUrl);
+          } else {
+            console.log("No active meeting found.");
+          }
+        } catch (error) {
+          console.error("Error fetching meeting link:", error);
+        }
+      }
+
+      // Fetch meeting link when student opens dashboard
+      fetchMeetingLink();
     </script>
   </body>
 </html>
