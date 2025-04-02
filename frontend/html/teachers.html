@@ -244,9 +244,39 @@
       </main>
     </div>
     <!-- Enrollment Request Modal -->
+    <button id="startCall">Start Video Call</button>
+    <iframe
+      id="videoCallFrame"
+      width="800"
+      height="600"
+      allow="camera; microphone; autoplay; fullscreen"
+    ></iframe>
 
     <!-- <script src="../js/script.js"></script> -->
     <script>
+      document
+        .getElementById("startCall")
+        .addEventListener("click", async () => {
+          try {
+            const response = await fetch(
+              "http://localhost:5000/api/video/create-room",
+              {
+                method: "POST",
+              }
+            );
+            const data = await response.json();
+            document.getElementById("videoCallFrame").src = data.roomUrl;
+            const roomUrl = data.roomUrl; // Make sure `data.roomUrl` is not undefined
+            if (!roomUrl) {
+              console.error("Error: Room URL is undefined.");
+            } else {
+              window.location.href = roomUrl; // Navigating to a meeting room
+            }
+          } catch (error) {
+            console.error("Error starting call:", error);
+          }
+        });
+
       document
         .getElementById("manageCoursesCard")
         .addEventListener("click", () => {

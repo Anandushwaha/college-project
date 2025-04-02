@@ -11,6 +11,7 @@ import Announcement from "./routes/announcementRoutes.js";
 import jobRoute from "./routes/jobRoute.js";
 import http from "http";
 import { Server } from "socket.io";
+import videoRoutes from "./utils/zoomHelper.js";
 
 dotenv.config();
 connectDB();
@@ -37,6 +38,7 @@ app.use(cookieParser());
 
 import courseRoutes from "./routes/courseRoutes.js";
 import questionRoutes from "./routes/questionRoutes.js";
+app.use("/api/video", videoRoutes);
 app.use("/api/v1/courses", authMiddleware, courseRoutes);
 app.use("/api/v1/questions", questionRoutes);
 app.use("/api/v1/auth", authRoute); // Mount the auth routes
