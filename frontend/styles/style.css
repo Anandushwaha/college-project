@@ -1,34 +1,257 @@
+:root {
+  --primary-color: #4a6de5;
+  --primary-hover: #3a5bd0;
+  --secondary-color: #8c66db;
+  --text-color: #333333;
+  --light-text: #6e7191;
+  --background: #f8f9fe;
+  --white: #ffffff;
+  --error: #e53935;
+  --success: #43a047;
+  --border-radius: 12px;
+  --shadow: 0 8px 24px rgba(149, 157, 165, 0.2);
+  --input-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  --transition: all 0.3s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background-color: #f4f4f4;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--background);
+  color: var(--text-color);
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
 .container {
-  width: 300px;
-  margin: 100px auto;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+  padding: 30px;
+  background: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+}
+
+.container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: linear-gradient(var(--primary-color), var(--secondary-color));
+}
+
+h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 25px;
+  color: var(--primary-color);
+  text-align: left;
+  padding-left: 5px;
+  position: relative;
+}
+
+h2::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: var(--secondary-color);
+  border-radius: 10px;
+}
+
+form {
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 18px;
+  position: relative;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: var(--light-text);
 }
 
 input,
-select,
-button {
+select {
   width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-  display: block;
+  padding: 14px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--border-radius);
+  font-size: 16px;
+  box-shadow: var(--input-shadow);
+  transition: var(--transition);
+  background-color: #f9fafc;
+  color: var(--text-color);
+}
+
+input::placeholder {
+  color: #bdbdbd;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(74, 109, 229, 0.1);
 }
 
 button {
-  background-color: blue;
-  color: white;
+  width: 100%;
+  padding: 14px;
   border: none;
+  border-radius: var(--border-radius);
+  background: var(--primary-color);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: var(--transition);
+  margin-top: 10px;
 }
 
 button:hover {
-  background-color: darkblue;
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 109, 229, 0.2);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.switch-form {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--light-text);
+}
+
+.switch-form a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.switch-form a:hover {
+  color: var(--secondary-color);
+}
+
+.error-message {
+  color: var(--error);
+  font-size: 14px;
+  margin-top: 5px;
+  display: none;
+}
+
+.show-error .error-message {
+  display: block;
+}
+
+.show-error input {
+  border-color: var(--error);
+}
+
+/* Animation for form success */
+@keyframes success-animation {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-message {
+  color: var(--success);
+  text-align: center;
+  animation: success-animation 0.5s ease forwards;
+  display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .container {
+    padding: 20px;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  input,
+  select,
+  button {
+    padding: 12px;
+  }
+}
+
+/* Show which form is active */
+.form-toggle {
+  display: flex;
+  margin-bottom: 20px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  background: #f1f3fa;
+}
+
+.form-toggle button {
+  flex: 1;
+  padding: 12px;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--light-text);
+  font-weight: 400;
+}
+
+.form-toggle button.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Hide the non-active form */
+#loginForm,
+#signupForm {
+  display: none;
+}
+
+/* Show the active form */
+#loginForm.active,
+#signupForm.active {
+  display: block;
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
