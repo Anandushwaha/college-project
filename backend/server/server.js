@@ -20,7 +20,7 @@ const app = express();
 const server = http.createServer(app); // Create HTTP server to use with Socket.io
 const io = new Server(server, {
   cors: {
-    origin: "http://127.0.0.1:5500", // Match the CORS origin
+    origin: ["http://127.0.0.1:5500", "http://localhost:5173"], // Fixed: Use array for multiple origins
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
@@ -29,7 +29,7 @@ const io = new Server(server, {
 app.use(
   cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
-    origin: "http://127.0.0.1:5500", // Adjust for frontend URL
+    origin: ["http://127.0.0.1:5500", "http://localhost:5173"], // Fixed: Use array for multiple origins
     credentials: true, // Allow sending cookies
   })
 );

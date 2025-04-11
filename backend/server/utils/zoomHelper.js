@@ -1,35 +1,35 @@
 import express from "express";
-import axios from "axios";
 import dotenv from "dotenv";
-import GlobalMeeting from "../models/Video.js"; // Import the global meeting model
+import GlobalMeeting from "../models/Video.js";
 
 dotenv.config();
 
 const router = express.Router();
-const DAILY_API_KEY = process.env.DAILY_API_KEY;
 
-// Create a new global meeting
+// Utility to generate a unique Jitsi room name
+function generateJitsiRoomName() {
+  return `JitsiRoom_${Date.now()}_${Math.random()
+    .toString(36)
+    .substring(2, 8)}`;
+}
+
+// Create a new global Jitsi meeting
 router.post("/create-room", async (req, res) => {
   try {
-    const response = await axios.post(
-      "https://api.daily.co/v1/rooms",
-      { privacy: "public" }, // Anyone can join
-      { headers: { Authorization: `Bearer ${DAILY_API_KEY}` } }
-    );
-
-    const meetingUrl = response.data.url;
+    const roomName = generateJitsiRoomName();
+    const meetingUrl = `https://meet.jit.si/${roomName}`;
 
     // Save meeting URL globally (overwrite the previous one)
     await GlobalMeeting.findOneAndUpdate({}, { meetingUrl }, { upsert: true });
 
     res.json({ roomUrl: meetingUrl });
   } catch (error) {
-    console.error("Error creating room:", error);
-    res.status(500).json({ error: "Failed to create room" });
+    console.error("Error creating Jitsi room:", error);
+    res.status(500).json({ error: "Failed to create Jitsi room" });
   }
 });
 
-// Get the latest meeting link (no course-based separation)
+// Get the latest Jitsi meeting link
 router.get("/get-room", async (req, res) => {
   try {
     const globalMeeting = await GlobalMeeting.findOne();
@@ -40,8 +40,8 @@ router.get("/get-room", async (req, res) => {
       res.json({ roomUrl: null }); // No meeting found
     }
   } catch (error) {
-    console.error("Error fetching meeting link:", error);
-    res.status(500).json({ error: "Failed to get room URL" });
+    console.error("Error fetching Jitsi room link:", error);
+    res.status(500).json({ error: "Failed to get Jitsi room URL" });
   }
 });
 
