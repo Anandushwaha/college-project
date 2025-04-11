@@ -74,23 +74,12 @@
           <div class="right-icons">
             <div class="notification-wrapper">
               <i class="fas fa-bell icon" id="notification-icon"></i>
-              <span id="notification-count" class="badge">3</span>
+              <span id="notification-count" class="badge">0</span>
 
               <div id="notification-dropdown" class="dropdown hidden">
                 <div id="notifications-container">
-                  <div class="notification-card unread">
-                    <p>New assignment submission from John Doe</p>
-                    <small>2 hours ago</small>
-                    <button class="mark-read">Mark as read</button>
-                  </div>
-                  <div class="notification-card unread">
-                    <p>Farhan asked a question in Advanced JavaScript course</p>
-                    <small>Yesterday</small>
-                    <button class="mark-read">Mark as read</button>
-                  </div>
-                  <div class="notification-card">
-                    <p>Your course "Web Development" was approved</p>
-                    <small>2 days ago</small>
+                  <div class="empty-notification">
+                    <p>No notifications to display</p>
                   </div>
                 </div>
                 <button id="clear-notifications" class="clear-btn">
@@ -178,7 +167,7 @@
           <div class="card course-card">
             <div class="course-image">
               <img
-                src="https://via.placeholder.com/300x160?text=Web+Development"
+                src="https://placehold.co/300x160/4a6de5/ffffff?text=Web+Development"
                 alt="Web Development"
               />
             </div>
@@ -195,7 +184,7 @@
           <div class="card course-card">
             <div class="course-image">
               <img
-                src="https://via.placeholder.com/300x160?text=JavaScript+Basics"
+                src="https://placehold.co/300x160/4a6de5/ffffff?text=JavaScript+Basics"
                 alt="JavaScript Basics"
               />
             </div>
@@ -212,7 +201,7 @@
           <div class="card course-card">
             <div class="course-image">
               <img
-                src="https://via.placeholder.com/300x160?text=Database+Design"
+                src="https://placehold.co/300x160/4a6de5/ffffff?text=Database+Design"
                 alt="Database Design"
               />
             </div>
@@ -284,7 +273,10 @@
 
     <script src="../js/script.js"></script>
     <script src="../js/videoCall.js"></script>
+    <script src="../js/notifications.js"></script>
     <script>
+      // NOTIFICATION HANDLERS ARE NOW MANAGED IN notifications.js
+      /*
       // Notification dropdown toggle
       document
         .getElementById("notification-icon")
@@ -341,6 +333,7 @@
 
       // Initialize notification count
       updateNotificationCount();
+      */
 
       // Sidebar toggle function
       function toggleSidebar() {
@@ -429,31 +422,45 @@
         }
       });
 
-      // Add event listeners for the main dashboard cards
-      document
-        .getElementById("manageCoursesCard")
-        .addEventListener("click", () => {
+      // Dashboard card navigation - with element checks
+      document.addEventListener("DOMContentLoaded", function () {
+        // Safe element selector function
+        function safeSelect(id) {
+          return document.getElementById(id);
+        }
+
+        // Function to safely add click event
+        function addClickEvent(id, callback) {
+          const element = safeSelect(id);
+          if (element) {
+            element.addEventListener("click", callback);
+          }
+        }
+
+        // Add click handlers only if elements exist
+        addClickEvent("manageCoursesCard", () => {
           window.location.href = "manage-courses.html";
         });
 
-      document
-        .getElementById("Upload-document")
-        .addEventListener("click", () => {
+        addClickEvent("Upload-document", () => {
           window.location.href = "upload-lectures.html";
         });
 
-      document
-        .getElementById("Upload-assignment")
-        .addEventListener("click", () => {
+        addClickEvent("Upload-assignment", () => {
           window.location.href = "assignment-teacher.html";
         });
 
-      document.getElementById("question").addEventListener("click", () => {
-        window.location.href = "questionTeacher.html";
-      });
+        addClickEvent("question", () => {
+          window.location.href = "questionTeacher.html";
+        });
 
-      document.getElementById("announcement").addEventListener("click", () => {
-        window.location.href = "announement-teacher.html";
+        addClickEvent("live-classes", () => {
+          window.location.href = "live-class.html";
+        });
+
+        addClickEvent("announcement", () => {
+          window.location.href = "announement-teacher.html";
+        });
       });
 
       // Close modals when clicking the close button or outside

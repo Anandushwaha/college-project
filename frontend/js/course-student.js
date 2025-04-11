@@ -159,16 +159,27 @@ async function enrollInCourse(courseId, buttonElement) {
 
     // Update button to show enrolled state
     buttonElement.disabled = true;
-    buttonElement.innerHTML =
-      '<i class="fas fa-check-circle"></i> Request Sent';
-    buttonElement.style.backgroundColor = "var(--success)";
+    buttonElement.innerHTML = '<i class="fas fa-clock"></i> Request Pending';
+    buttonElement.style.backgroundColor = "#ff9800";
 
     // Add enrolled badge to course card
     const courseCard = buttonElement.closest(".course-card");
     const badge = document.createElement("div");
-    badge.className = "enrolled-badge";
+    badge.className = "status-pill status-pending";
     badge.innerHTML = "Request Pending";
-    courseCard.appendChild(badge);
+
+    // Add badge to course card
+    const cardBottom = courseCard.querySelector(".card-bottom");
+    if (cardBottom) {
+      cardBottom.prepend(badge);
+    } else {
+      courseCard.appendChild(badge);
+    }
+
+    // Refresh notification count
+    if (typeof getNotificationCount === "function") {
+      setTimeout(getNotificationCount, 1000);
+    }
   } catch (error) {
     console.error("Error sending enrollment request:", error);
     showErrorMessage(error.message || "Failed to send enrollment request");

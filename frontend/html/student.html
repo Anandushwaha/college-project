@@ -79,8 +79,21 @@
           </button>
           <div class="page-title">Student Dashboard</div>
           <div class="right-icons">
-            <div class="icon" id="notification-icon">
-              <i class="fas fa-bell"></i>
+            <div class="notification-wrapper">
+              <i class="fas fa-bell icon" id="notification-icon"></i>
+              <span id="notification-count" class="badge">0</span>
+
+              <div id="notification-dropdown" class="dropdown hidden">
+                <div id="notifications-container">
+                  <!-- Notifications will be loaded dynamically -->
+                  <div class="empty-notification">
+                    <p>No notifications to display</p>
+                  </div>
+                </div>
+                <button id="clear-notifications" class="clear-btn">
+                  Clear All
+                </button>
+              </div>
             </div>
             <img
               src="https://ui-avatars.com/api/?name=Student&background=4a6de5&color=fff"
@@ -150,6 +163,7 @@
     </div>
 
     <script src="../js/script.js"></script>
+    <script src="../js/notifications.js"></script>
     <script>
       // Dashboard card navigation
       document

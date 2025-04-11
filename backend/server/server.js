@@ -12,6 +12,7 @@ import jobRoute from "./routes/jobRoute.js";
 import http from "http";
 import { Server } from "socket.io";
 import videoRoutes from "./utils/zoomHelper.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -46,6 +47,7 @@ app.use("/api/v1/lectures", lectureRoutes);
 app.use("/api/v1/assignment", Assignment);
 app.use("/api/v1/announcements", Announcement);
 app.use("/api/v1/jobs", jobRoute);
+app.use("/api/v1/notifications", notificationRoutes);
 
 let questions = []; // Store questions in-memory (use DB in production)
 let nextQuestionId = 1; // Simple ID counter for in-memory storage

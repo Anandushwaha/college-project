@@ -1,6 +1,8 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import Course from "../models/Course.js";
+import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 
 const router = express.Router();
 // ✅ Create Course (Only teachers can create courses)
@@ -103,6 +105,49 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
+router.post("/enroll/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+
+    const course = await Course.findById(id).populate("teacherId");
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    // Check if already in pending or enrolled
+    if (
+      course.pendingEnrollments.includes(studentId) ||
+      course.studentsEnrolled.includes(studentId)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Request already sent or enrolled" });
+    }
+
+    course.pendingEnrollments.push(studentId);
+    await course.save();
+
+    // Create notification for teacher
+    const student = await User.findById(studentId).select("name");
+    await Notification.create({
+      userId: course.teacherId,
+      message: `${student.name} has requested to enroll in your course "${course.title}"`,
+      type: "enrollment_request",
+      courseId: course._id,
+      actionRequired: true,
+      data: {
+        studentId: studentId,
+        teacherId: course.teacherId,
+        courseName: course.title,
+      },
+    });
+
+    res.json({ message: "Enrollment request sent!" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error });
+  }
+});
+
+// Approve Enrollment
 router.put(
   "/enroll/approve/:notificationId",
   authMiddleware,
@@ -124,21 +169,39 @@ router.put(
         return res.status(403).json({ message: "Unauthorized" });
       }
 
+      // Remove from pending and add to enrolled
+      const pendingIndex = course.pendingEnrollments.indexOf(studentId);
+      if (pendingIndex > -1) {
+        course.pendingEnrollments.splice(pendingIndex, 1);
+      }
+
       if (!course.studentsEnrolled.includes(studentId)) {
         course.studentsEnrolled.push(studentId);
-        await course.save();
       }
 
+      await course.save();
+
+      // Create notification for student
+      const teacher = await User.findById(req.user.id).select("name");
       await Notification.create({
         userId: studentId,
-        message: `Your enrollment for ${course.title} is approved!`,
-        studentId: req.user.id, // student's ID
-        courseId: course._id, // Course ID
+        message: `Your enrollment request for "${course.title}" has been approved!`,
+        type: "enrollment_approved",
+        courseId: course._id,
+        data: {
+          studentId: studentId,
+          teacherId: course.teacherId,
+          courseName: course.title,
+        },
       });
 
-      await Notification.findByIdAndDelete(notificationId);
+      // Mark teacher's notification as read
+      await Notification.findByIdAndUpdate(notificationId, { isRead: true });
 
-      res.json({ message: "Enrollment approved" });
+      res.json({
+        message: "Enrollment approved",
+        enrollmentCount: course.studentsEnrolled.length,
+      });
     } catch (error) {
       console.error("Approval Error:", error);
       res.status(500).json({ message: "Server Error" });
@@ -146,31 +209,6 @@ router.put(
   }
 );
 
-// Approve Enrollment
-// Updated approval route
-router.put(
-  "/enroll/approve/:notificationId",
-  authMiddleware,
-  async (req, res) => {
-    try {
-      const { notificationId } = req.params;
-      const { studentId, courseId } = req.body; // Get from request body
-
-      // Validate IDs first
-      if (!mongoose.Types.ObjectId.isValid(courseId)) {
-        return res.status(400).json({ message: "Invalid course ID" });
-      }
-
-      const course = await Course.findById(courseId);
-      if (!course) return res.status(404).json({ message: "Course not found" });
-
-      // Rest of your approval logic...
-    } catch (error) {
-      console.error("Approval Error:", error);
-      res.status(500).json({ message: "Server Error" });
-    }
-  }
-);
 // Reject Enrollment
 router.put(
   "/enroll/reject/:notificationId",
@@ -196,13 +234,21 @@ router.put(
       }
 
       // Notify student
+      const teacher = await User.findById(req.user.id).select("name");
       await Notification.create({
         userId: studentId,
-        message: `Enrollment request for ${course.title} was rejected.`,
+        message: `Your enrollment request for "${course.title}" was rejected.`,
+        type: "enrollment_rejected",
+        courseId: course._id,
+        data: {
+          studentId: studentId,
+          teacherId: course.teacherId,
+          courseName: course.title,
+        },
       });
 
-      // Delete teacher's notification
-      await Notification.findByIdAndDelete(notificationId);
+      // Mark teacher's notification as read
+      await Notification.findByIdAndUpdate(notificationId, { isRead: true });
 
       res.json({ message: "Enrollment rejected!" });
     } catch (error) {
@@ -211,32 +257,6 @@ router.put(
   }
 );
 
-router.post("/enroll/:id", authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const studentId = req.user.id;
-
-    const course = await Course.findById(id).populate("teacherId");
-    if (!course) return res.status(404).json({ message: "Course not found" });
-
-    // Check if already in pending or enrolled
-    if (
-      course.pendingEnrollments.includes(studentId) ||
-      course.studentsEnrolled.includes(studentId)
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Request already sent or enrolled" });
-    }
-
-    course.pendingEnrollments.push(studentId);
-    await course.save();
-
-    res.json({ message: "Enrollment request sent!" });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error });
-  }
-});
 router.post("/create-room", async (req, res) => {
   try {
     const { courseId } = req.body; // Get course ID from request

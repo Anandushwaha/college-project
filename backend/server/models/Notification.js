@@ -15,6 +15,32 @@ const notificationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    type: {
+      type: String,
+      enum: [
+        "enrollment_request",
+        "enrollment_approved",
+        "enrollment_rejected",
+        "general",
+      ],
+      default: "general",
+    },
+    courseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
+    },
+    actionRequired: {
+      type: Boolean,
+      default: false,
+    },
+    actionId: {
+      type: String,
+    },
+    data: {
+      studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      courseName: String,
+    },
   },
   { timestamps: true }
 );
