@@ -3,8 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teacher Dashboard</title>
-    <link rel="stylesheet" href="../styles/dashboard.css" />
+    <title>Student Dashboard | Online Learning</title>
+    <link rel="stylesheet" href="../styles/student-dashboard.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const role = localStorage.getItem("role");
@@ -17,96 +25,274 @@
   </head>
   <body>
     <div class="dashboard">
-      <!-- Sidebar with toggle button inside -->
+      <!-- Sidebar -->
       <aside class="sidebar" id="sidebar">
         <h2>Online Learning</h2>
-        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
         <ul id="courseList">
-          <li>Course 1</li>
-          <li>Course 2</li>
-          <li>Course 3</li>
+          <li class="active">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+          </li>
+          <li>
+            <i class="fas fa-book"></i>
+            <span>My Courses</span>
+          </li>
+          <li>
+            <i class="fas fa-video"></i>
+            <span>Live Classes</span>
+          </li>
+          <li>
+            <i class="fas fa-tasks"></i>
+            <span>Assignments</span>
+          </li>
+          <li>
+            <i class="fas fa-file-alt"></i>
+            <span>Study Materials</span>
+          </li>
+          <li>
+            <i class="fas fa-comments"></i>
+            <span>Discussions</span>
+          </li>
+          <li>
+            <i class="fas fa-briefcase"></i>
+            <span>Job Board</span>
+          </li>
+          <li>
+            <i class="fas fa-user-cog"></i>
+            <span>Profile</span>
+          </li>
         </ul>
       </aside>
+
+      <!-- Mobile menu overlay -->
+      <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
       <!-- Main Content -->
       <main class="main-content" id="mainContent">
         <!-- Top Bar -->
         <div class="top-bar">
-          <!-- Removed menu toggle from here -->
+          <button class="menu-toggle-mobile" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">Student Dashboard</div>
           <div class="right-icons">
+            <div class="icon" id="notification-icon">
+              <i class="fas fa-bell"></i>
+            </div>
             <img
-              src="assets/notification.png"
-              alt="Notifications"
-              class="icon"
+              src="https://ui-avatars.com/api/?name=Student&background=4a6de5&color=fff"
+              alt="Profile"
+              class="profile-icon"
             />
-            <img src="assets/profile.png" alt="Profile" class="icon" />
           </div>
+        </div>
+
+        <!-- Live Class Alert if available -->
+        <div
+          class="live-class-section"
+          id="liveClassSection"
+          style="display: none"
+        >
+          <h2><i class="fas fa-video"></i> Live Class Available</h2>
+          <button id="joinCallButton" class="join-call-btn">
+            <i class="fas fa-video"></i> Join Video Call
+          </button>
         </div>
 
         <!-- Dashboard Cards -->
         <div class="dashboard-grid">
-          <div class="card" id="manageCoursesCard">View Enrolled Courses</div>
+          <div class="card" id="manageCoursesCard" style="--index: 0">
+            <div class="card-icon">
+              <i class="fas fa-book-open"></i>
+            </div>
+            <span>View Enrolled Courses</span>
+          </div>
 
-          <div class="card">Attend Live Classes</div>
-          <div class="card" id="managenotes">View & Download Notes</div>
-          <div class="card" id="submitassignment">Submit Assignments</div>
-          <div class="card" id="question">Ask Questions to Teachers</div>
-          <div class="card" id="job">View Job Board</div>
+          <div class="card" id="liveClassesCard" style="--index: 1">
+            <div class="card-icon">
+              <i class="fas fa-video"></i>
+            </div>
+            <span>Attend Live Classes</span>
+          </div>
+
+          <div class="card" id="managenotes" style="--index: 2">
+            <div class="card-icon">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <span>View & Download Notes</span>
+          </div>
+
+          <div class="card" id="submitassignment" style="--index: 3">
+            <div class="card-icon">
+              <i class="fas fa-tasks"></i>
+            </div>
+            <span>Submit Assignments</span>
+          </div>
+
+          <div class="card" id="question" style="--index: 4">
+            <div class="card-icon">
+              <i class="fas fa-question-circle"></i>
+            </div>
+            <span>Ask Questions to Teachers</span>
+          </div>
+
+          <div class="card" id="job" style="--index: 5">
+            <div class="card-icon">
+              <i class="fas fa-briefcase"></i>
+            </div>
+            <span>View Job Board</span>
+          </div>
         </div>
       </main>
     </div>
-    <h2>Join Live Class</h2>
-    <button id="joinCallButton" style="display: none">Join Video Call</button>
 
     <script src="../js/script.js"></script>
     <script>
+      // Dashboard card navigation
       document
         .getElementById("manageCoursesCard")
         .addEventListener("click", () => {
-          window.location.href = "manage-course-student.html"; // Redirect to course management page
+          window.location.href = "manage-course-student.html";
         });
+
       document.getElementById("question").addEventListener("click", () => {
-        window.location.href = "askquestion.html"; // Redirect to course management page
+        window.location.href = "askquestion.html";
       });
+
       document.getElementById("managenotes").addEventListener("click", () => {
-        window.location.href = "notes.html"; // Redirect to notes page
+        window.location.href = "notes.html";
       });
+
       document.getElementById("job").addEventListener("click", () => {
-        window.location.href = "job.html"; // Redirect to course management page
+        window.location.href = "job.html";
       });
+
       document
         .getElementById("submitassignment")
         .addEventListener("click", () => {
-          window.location.href = "assignment.html"; // Redirect to assignment page
+          window.location.href = "assignment.html";
+        });
+
+      document
+        .getElementById("liveClassesCard")
+        .addEventListener("click", () => {
+          // Check if there's an active call first
+          fetchMeetingLink().then((meetingUrl) => {
+            if (meetingUrl) {
+              window.location.href = meetingUrl;
+            } else {
+              alert(
+                "No live classes are currently in session. Please check back later."
+              );
+            }
+          });
         });
 
       // Sidebar toggle function
       function toggleSidebar() {
-        document.body.classList.toggle("sidebar-collapsed");
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+          document.body.classList.toggle("sidebar-active");
+        } else {
+          document.body.classList.toggle("sidebar-collapsed");
+        }
 
         // Save the state to localStorage
         const isSidebarCollapsed =
           document.body.classList.contains("sidebar-collapsed");
         localStorage.setItem("sidebar-collapsed", isSidebarCollapsed);
+
+        const isSidebarActive =
+          document.body.classList.contains("sidebar-active");
+        localStorage.setItem("sidebar-active", isSidebarActive);
       }
 
       // Check saved sidebar state on page load
       document.addEventListener("DOMContentLoaded", () => {
+        const isMobile = window.innerWidth <= 768;
+
+        // Check localStorage for saved states
         const isSidebarCollapsed =
           localStorage.getItem("sidebar-collapsed") === "true";
-        if (isSidebarCollapsed) {
-          document.body.classList.add("sidebar-collapsed");
+        const isSidebarActive =
+          localStorage.getItem("sidebar-active") === "true";
+
+        if (isMobile) {
+          // On mobile devices, restore sidebar active state
+          if (isSidebarActive) {
+            document.body.classList.add("sidebar-active");
+          }
         } else {
-          // On mobile, collapse by default
-          const isMobile = window.innerWidth <= 992;
-          if (
-            isMobile &&
-            !document.body.classList.contains("sidebar-collapsed")
-          ) {
+          // On desktop, restore collapsed state
+          if (isSidebarCollapsed) {
             document.body.classList.add("sidebar-collapsed");
           }
         }
+
+        // Make sidebar items clickable for navigation
+        document.querySelectorAll(".sidebar li").forEach((item) => {
+          item.addEventListener("click", function () {
+            // Remove active class from all items
+            document.querySelectorAll(".sidebar li").forEach((li) => {
+              li.classList.remove("active");
+            });
+
+            // Add active class to clicked item
+            this.classList.add("active");
+
+            // Here you would normally navigate to different sections
+            const text = this.querySelector("span").textContent;
+            if (text === "Dashboard") {
+              // Already on dashboard
+            } else if (text === "My Courses") {
+              window.location.href = "manage-course-student.html";
+            } else if (text === "Live Classes") {
+              // Check if there's an active call first
+              fetchMeetingLink().then((meetingUrl) => {
+                if (meetingUrl) {
+                  window.location.href = meetingUrl;
+                } else {
+                  alert(
+                    "No live classes are currently in session. Please check back later."
+                  );
+                }
+              });
+            } else if (text === "Assignments") {
+              window.location.href = "assignment.html";
+            } else if (text === "Study Materials") {
+              window.location.href = "notes.html";
+            } else if (text === "Discussions") {
+              window.location.href = "askquestion.html";
+            } else if (text === "Job Board") {
+              window.location.href = "job.html";
+            }
+
+            // Close sidebar on mobile after navigation
+            if (isMobile) {
+              document.body.classList.remove("sidebar-active");
+            }
+          });
+        });
       });
+
+      // Window resize event listener
+      window.addEventListener("resize", () => {
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+          // On mobile, remove collapsed and use active instead
+          document.body.classList.remove("sidebar-collapsed");
+        } else {
+          // On desktop, remove active and use collapsed instead
+          document.body.classList.remove("sidebar-active");
+        }
+      });
+
+      // Fetch meeting link function
       async function fetchMeetingLink() {
         try {
           const response = await fetch(
@@ -115,15 +301,25 @@
           const data = await response.json();
 
           if (data.roomUrl) {
+            // Show the live class section
+            const liveClassSection =
+              document.getElementById("liveClassSection");
+            liveClassSection.style.display = "flex";
+
+            // Update join button
             const joinButton = document.getElementById("joinCallButton");
-            joinButton.href = data.roomUrl;
-            joinButton.style.display = "block";
             joinButton.onclick = () => (window.location.href = data.roomUrl);
+
+            return data.roomUrl;
           } else {
-            console.log("No active meeting found.");
+            // Hide the section if no meeting available
+            document.getElementById("liveClassSection").style.display = "none";
+            return null;
           }
         } catch (error) {
           console.error("Error fetching meeting link:", error);
+          document.getElementById("liveClassSection").style.display = "none";
+          return null;
         }
       }
 

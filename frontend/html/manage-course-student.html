@@ -3,210 +3,506 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Available Courses</title>
-
+    <title>My Courses | Online Learning</title>
+    <link rel="stylesheet" href="../styles/student-dashboard.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const role = localStorage.getItem("role");
+        if (role !== "student") {
+          alert("Access Denied");
+          window.location.href = "../index.html";
+        }
+      });
+    </script>
     <style>
-      /* General Styles */
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f7f7f7;
-        color: #333;
-        line-height: 1.6;
-      }
-
-      h1 {
-        text-align: center;
-        padding: 20px 0;
-        background-color: #007bff;
-        color: white;
-        margin: 0;
-      }
-
-      .container {
-        width: 90%;
-        max-width: 960px; /* Adjust as needed */
-        margin: 20px auto;
-        padding: 20px;
-      }
-
       /* Course List Styles */
-      #courses-container {
+      .courses-container {
         display: grid;
-        grid-template-columns: repeat(
-          auto-fit,
-          minmax(300px, 1fr)
-        ); /* Responsive grid */
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+        animation: fadeIn 0.5s ease-out forwards;
       }
 
       .course-card {
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-        text-align: left;
-        transition: transform 0.2s ease-in-out;
-        border: 1px solid #ddd;
+        background-color: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        padding: 0;
+        overflow: hidden;
+        transition: var(--transition);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        animation: slideUp 0.5s ease-out forwards;
+        animation-delay: calc(var(--index, 0) * 0.1s);
       }
 
       .course-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-6px);
+        box-shadow: var(--shadow);
+        border-color: rgba(74, 109, 229, 0.2);
+      }
+
+      .course-image {
+        width: 100%;
+        height: 180px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .course-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: var(--transition);
+      }
+
+      .course-card:hover .course-image img {
+        transform: scale(1.05);
+      }
+
+      .course-content {
+        padding: 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
       }
 
       .course-card h3 {
-        margin-top: 0;
-        margin-bottom: 10px;
-        color: #0056b3;
+        margin: 0 0 15px 0;
+        color: var(--text-dark);
+        font-size: 18px;
+        font-weight: 600;
       }
 
-      .course-card p {
-        margin-bottom: 8px;
+      .course-stats {
+        display: flex;
+        justify-content: space-between;
+        margin: 15px 0;
+        color: var(--text-light);
+        font-size: 14px;
       }
 
-      .course-card strong {
-        font-weight: bold;
+      .course-instructor {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 14px;
       }
 
-      /* Button Styles */
+      .course-instructor img {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-right: 10px;
+        border: 2px solid var(--primary-light);
+      }
+
+      .course-description {
+        color: var(--text-light);
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 20px;
+        flex: 1;
+      }
+
       .enroll-btn {
-        background-color: #28a745; /* Green */
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--secondary-color) 100%
+        );
         color: white;
         border: none;
         padding: 10px 20px;
-        border-radius: 5px;
+        border-radius: var(--border-radius);
         cursor: pointer;
-        font-size: 1rem;
-        transition: background-color 0.2s ease-in-out;
-        margin-top: 15px;
-        display: inline-block; /* Make sure the button is displayed */
+        font-weight: 600;
+        transition: var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 8px;
       }
 
       .enroll-btn:hover {
-        background-color: #218838;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        opacity: 0.95;
       }
 
-      /* No Courses Message */
-      #emptyState {
+      .enrolled-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background-color: var(--success);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 5;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      /* Empty State */
+      .empty-state {
         text-align: center;
-        padding: 20px;
-        font-style: italic;
-        color: #777;
-        display: none; /* Hidden by default, shown by JavaScript */
+        padding: 50px 20px;
+        background-color: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        margin: 30px 0;
       }
 
-      /* Responsive Design */
-      @media (max-width: 600px) {
-        .container {
-          width: 95%;
-          padding: 10px;
-        }
-
-        .course-card {
-          padding: 15px;
-        }
-
-        .course-card h3 {
-          font-size: 1.2rem;
-        }
-
-        .enroll-btn {
-          font-size: 0.9rem;
-          padding: 8px 16px;
-        }
+      .empty-state-icon {
+        font-size: 60px;
+        color: var(--secondary-light);
+        margin-bottom: 20px;
       }
 
-      /* Message Styles (Success/Error) */
-      #successMessage,
-      #errorMessage {
-        display: none;
+      .empty-state h3 {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: var(--text-dark);
+      }
+
+      .empty-state p {
+        font-size: 16px;
+        color: var(--text-light);
+        margin-bottom: 25px;
+      }
+
+      /* Toast Messages */
+      .toast {
         position: fixed;
         top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 24px;
-        border-radius: 6px;
-        z-index: 1000;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: var(--border-radius);
+        color: white;
         font-weight: 500;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: var(--shadow);
+        animation: slideIn 0.3s ease forwards;
+        max-width: 350px;
+        opacity: 0;
       }
 
-      #successMessage {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
       }
 
-      #errorMessage {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-      }
-      .course-management {
-        padding: 1.5rem;
-        border-radius: 8px;
-        background-color: #fff;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin-top: 1.5rem;
+      .toast-success {
+        background-color: var(--success);
       }
 
-      .course-management-header {
+      .toast-error {
+        background-color: var(--error);
+      }
+
+      .toast i {
+        font-size: 20px;
+      }
+
+      /* Back Button */
+      .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary-color);
+        font-weight: 500;
+        transition: var(--transition-fast);
+        margin-bottom: 20px;
+      }
+
+      .back-button:hover {
+        color: var(--primary-dark);
+        transform: translateX(-5px);
+      }
+
+      /* Course Details Modal */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .modal-content {
+        background-color: var(--white);
+        border-radius: var(--border-radius);
+        width: 90%;
+        max-width: 700px;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
+        animation: slideUp 0.4s ease;
+      }
+
+      .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #eee;
       }
 
-      .header-left {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
+      .modal-body {
+        padding: 20px;
       }
-      .btn {
-        padding: 0.5rem 1rem;
+
+      .close {
+        background: none;
         border: none;
-        border-radius: 4px;
+        font-size: 24px;
         cursor: pointer;
-        font-weight: 500;
-        transition: background-color 0.2s;
+        color: var(--text-light);
+        transition: var(--transition-fast);
       }
 
-      .btn-primary {
-        background-color: #3498db;
-        color: white;
+      .close:hover {
+        color: var(--error);
       }
 
-      .btn-primary:hover {
-        background-color: #2980b9;
+      /* Responsive Adjustments */
+      @media (max-width: 768px) {
+        .courses-container {
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 15px;
+        }
+
+        .course-image {
+          height: 160px;
+        }
       }
 
-      .btn-secondary {
-        background-color: #f1c40f;
-        color: #333;
-      }
-
-      .btn-secondary:hover {
-        background-color: #f39c12;
+      @media (max-width: 576px) {
+        .courses-container {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="course-management">
-      <div class="course-management-header">
-        <div class="header-left">
-          <a href="student.html" class="btn btn-secondary back-button"
-            >← Back to Dashboard</a
-          >
+    <div class="dashboard">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <h2>Online Learning</h2>
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <ul id="courseList">
+          <li>
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+          </li>
+          <li class="active">
+            <i class="fas fa-book"></i>
+            <span>My Courses</span>
+          </li>
+          <li>
+            <i class="fas fa-video"></i>
+            <span>Live Classes</span>
+          </li>
+          <li>
+            <i class="fas fa-tasks"></i>
+            <span>Assignments</span>
+          </li>
+          <li>
+            <i class="fas fa-file-alt"></i>
+            <span>Study Materials</span>
+          </li>
+          <li>
+            <i class="fas fa-comments"></i>
+            <span>Discussions</span>
+          </li>
+          <li>
+            <i class="fas fa-briefcase"></i>
+            <span>Job Board</span>
+          </li>
+          <li>
+            <i class="fas fa-user-cog"></i>
+            <span>Profile</span>
+          </li>
+        </ul>
+      </aside>
 
-          <h2>Available Courses</h2>
+      <!-- Mobile menu overlay -->
+      <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+      <!-- Main Content -->
+      <main class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <div class="top-bar">
+          <button class="menu-toggle-mobile" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">My Courses</div>
+          <div class="right-icons">
+            <div class="icon" id="notification-icon">
+              <i class="fas fa-bell"></i>
+            </div>
+            <img
+              src="https://ui-avatars.com/api/?name=Student&background=4a6de5&color=fff"
+              alt="Profile"
+              class="profile-icon"
+            />
+          </div>
         </div>
-      </div>
-      <div id="courses-container"></div>
+
+        <!-- Course Management Section -->
+        <div class="page-header">
+          <h1 class="header-title">Available Courses</h1>
+          <div class="header-actions">
+            <a href="student.html" class="back-button">
+              <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+          </div>
+        </div>
+
+        <!-- Courses Container -->
+        <div id="courses-container" class="courses-container"></div>
+
+        <!-- Empty State (Hidden by default) -->
+        <div id="emptyState" class="empty-state" style="display: none">
+          <div class="empty-state-icon">
+            <i class="fas fa-book-open"></i>
+          </div>
+          <h3>No Courses Available</h3>
+          <p>We'll add more courses soon. Check back later!</p>
+        </div>
+
+        <!-- Toast Messages -->
+        <div
+          id="successMessage"
+          class="toast toast-success"
+          style="display: none"
+        >
+          <i class="fas fa-check-circle"></i>
+          <span id="successText">Successfully enrolled in the course!</span>
+        </div>
+
+        <div id="errorMessage" class="toast toast-error" style="display: none">
+          <i class="fas fa-exclamation-circle"></i>
+          <span id="errorText">Something went wrong. Please try again.</span>
+        </div>
+      </main>
     </div>
+
+    <script src="../js/script.js"></script>
     <script type="module" src="../js/course-student.js"></script>
+    <script>
+      // Sidebar toggle function
+      function toggleSidebar() {
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+          document.body.classList.toggle("sidebar-active");
+        } else {
+          document.body.classList.toggle("sidebar-collapsed");
+        }
+
+        // Save the state to localStorage
+        const isSidebarCollapsed =
+          document.body.classList.contains("sidebar-collapsed");
+        localStorage.setItem("sidebar-collapsed", isSidebarCollapsed);
+
+        const isSidebarActive =
+          document.body.classList.contains("sidebar-active");
+        localStorage.setItem("sidebar-active", isSidebarActive);
+      }
+
+      // Check saved sidebar state on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        const isMobile = window.innerWidth <= 768;
+
+        // Check localStorage for saved states
+        const isSidebarCollapsed =
+          localStorage.getItem("sidebar-collapsed") === "true";
+        const isSidebarActive =
+          localStorage.getItem("sidebar-active") === "true";
+
+        if (isMobile) {
+          // On mobile devices, restore sidebar active state
+          if (isSidebarActive) {
+            document.body.classList.add("sidebar-active");
+          }
+        } else {
+          // On desktop, restore collapsed state
+          if (isSidebarCollapsed) {
+            document.body.classList.add("sidebar-collapsed");
+          }
+        }
+
+        // Make sidebar items clickable for navigation
+        document.querySelectorAll(".sidebar li").forEach((item) => {
+          item.addEventListener("click", function () {
+            if (this.classList.contains("active")) return;
+
+            // Get the text of the clicked item
+            const text = this.querySelector("span").textContent;
+
+            if (text === "Dashboard") {
+              window.location.href = "student.html";
+            } else if (text === "My Courses") {
+              // Already on this page
+            } else if (text === "Live Classes") {
+              window.location.href = "student.html"; // Redirect and handle on dashboard
+            } else if (text === "Assignments") {
+              window.location.href = "assignment.html";
+            } else if (text === "Study Materials") {
+              window.location.href = "notes.html";
+            } else if (text === "Discussions") {
+              window.location.href = "askquestion.html";
+            } else if (text === "Job Board") {
+              window.location.href = "job.html";
+            }
+          });
+        });
+      });
+
+      // Window resize event listener
+      window.addEventListener("resize", () => {
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+          // On mobile, remove collapsed and use active instead
+          document.body.classList.remove("sidebar-collapsed");
+        } else {
+          // On desktop, remove active and use collapsed instead
+          document.body.classList.remove("sidebar-active");
+        }
+      });
+    </script>
   </body>
 </html>

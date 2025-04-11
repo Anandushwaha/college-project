@@ -3,136 +3,460 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teacher Dashboard</title>
+    <title>Teacher Q&A Dashboard</title>
     <!-- Updated Socket.io client library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="../styles/dashboard.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+    />
 
     <style>
+      :root {
+        --primary-color: #4a6de5;
+        --primary-hover: #3a5bd0;
+        --secondary-color: #8c66db;
+        --text-color: #333333;
+        --light-text: #6e7191;
+        --background: #f8f9fe;
+        --white: #ffffff;
+        --error: #e53935;
+        --success: #43a047;
+        --warning: #f9a825;
+        --border-radius: 12px;
+        --shadow: 0 8px 24px rgba(149, 157, 165, 0.2);
+        --input-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        --transition: all 0.3s ease;
+        --card-hover-shadow: 0 12px 24px rgba(149, 157, 165, 0.3);
+      }
+
       body {
-        font-family: Arial, sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         padding: 0;
-        background-color: #f4f4f9;
+        background-color: var(--background);
+        color: var(--text-color);
+        line-height: 1.6;
       }
 
-      .teacher-dashboard {
-        max-width: 800px;
-        margin: 50px auto;
+      /* Main Layout */
+      .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
         padding: 20px;
-        background-color: white;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        animation: fadeIn 0.5s ease-in-out;
       }
 
-      h2 {
-        text-align: center;
-        font-size: 24px;
-        margin-bottom: 20px;
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
+      .course-management-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--white);
+        padding: 20px 25px;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 25px;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .header-left h2 {
+        font-size: 1.5rem;
+        color: var(--text-color);
+        margin: 0;
+        text-align: left;
+      }
+
+      .back-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        color: var(--text-color);
+        transition: var(--transition);
+        background-color: rgba(140, 102, 219, 0.1);
+        border-radius: 30px;
+        text-decoration: none;
+      }
+
+      .back-button:hover {
+        background-color: rgba(140, 102, 219, 0.2);
+        transform: translateX(-3px);
+      }
+
+      /* Dashboard Layout */
+      .teacher-dashboard {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+
+      /* Questions Section */
       .questions-container {
-        margin-bottom: 30px;
+        background-color: var(--white);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.3rem;
+        color: var(--text-color);
+      }
+
+      .section-heading i {
+        color: var(--primary-color);
       }
 
       .question-list {
-        max-height: 400px;
+        max-height: 500px;
         overflow-y: auto;
+        padding-right: 10px;
+      }
+
+      /* Scrollbar styles */
+      .question-list::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .question-list::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+      }
+
+      .question-list::-webkit-scrollbar-thumb {
+        background: rgba(74, 109, 229, 0.3);
+        border-radius: 10px;
+      }
+
+      .question-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(74, 109, 229, 0.5);
       }
 
       .question-item {
-        padding: 15px;
-        margin: 15px 0;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background-color: #f9f9f9;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: var(--border-radius);
+        background-color: var(--white);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid var(--primary-color);
+        transition: var(--transition);
+        position: relative;
       }
 
-      .answer-section {
-        margin-top: 20px;
+      .question-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
       }
 
-      textarea {
-        width: 100%;
-        padding: 10px;
+      .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
         margin-bottom: 10px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        font-size: 14px;
       }
 
-      button {
-        padding: 10px 15px;
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
+      .student-info {
+        font-weight: 600;
+        color: var(--text-color);
       }
 
-      button:hover {
-        background-color: #45a049;
+      .question-date {
+        font-size: 0.85rem;
+        color: var(--light-text);
       }
 
-      .connection-status {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-size: 12px;
-      }
-
-      .connected {
-        background-color: #4caf50;
-        color: white;
-      }
-
-      .disconnected {
-        background-color: #f44336;
-        color: white;
+      .question-content {
+        margin-bottom: 15px;
+        font-size: 1.1rem;
       }
 
       .answers {
+        margin-top: 15px;
+        padding: 15px;
+        background-color: rgba(74, 109, 229, 0.05);
+        border-radius: 8px;
+      }
+
+      .answer-item {
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      .answer-item:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+      }
+
+      .teacher-name {
+        font-weight: 600;
+        color: var(--secondary-color);
+      }
+
+      .answer-date {
+        font-size: 0.85rem;
+        color: var(--light-text);
+        margin-top: 5px;
+      }
+
+      .no-answers {
+        color: var(--light-text);
+        font-style: italic;
+      }
+
+      .answer-btn {
+        padding: 8px 16px;
+        background-color: rgba(74, 109, 229, 0.1);
+        color: var(--primary-color);
+        border: none;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
         margin-top: 10px;
-        padding: 10px;
-        background-color: #f0f8ff;
-        border-radius: 5px;
+      }
+
+      .answer-btn:hover {
+        background-color: var(--primary-color);
+        color: white;
       }
 
       .active-question {
-        border: 2px solid #4caf50;
-        background-color: #e8f5e9;
+        border-left: 4px solid var(--secondary-color);
+        background-color: rgba(140, 102, 219, 0.05);
       }
 
       .no-questions {
         text-align: center;
-        padding: 20px;
-        color: #777;
+        padding: 40px 20px;
+        color: var(--light-text);
+        font-size: 1.1rem;
+        background-color: rgba(0, 0, 0, 0.02);
+        border-radius: 8px;
+      }
+
+      .no-questions i {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        color: rgba(0, 0, 0, 0.1);
+      }
+
+      /* Answer Form Section */
+      .answer-section {
+        background-color: var(--white);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      textarea.form-control {
+        width: 100%;
+        padding: 15px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 1rem;
+        resize: vertical;
+        min-height: 120px;
+        transition: var(--transition);
+        box-shadow: var(--input-shadow);
+      }
+
+      textarea.form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(74, 109, 229, 0.15);
+      }
+
+      textarea.form-control:disabled {
+        background-color: rgba(0, 0, 0, 0.05);
+        cursor: not-allowed;
+      }
+
+      .submit-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--secondary-color) 100%
+        );
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 30px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: var(--transition);
+        box-shadow: 0 4px 10px rgba(74, 109, 229, 0.2);
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(74, 109, 229, 0.3);
+      }
+
+      .submit-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      /* Connection Status */
+      .connection-status {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 8px 15px;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(30px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .connected {
+        background-color: rgba(67, 160, 71, 0.2);
+        color: var(--success);
+      }
+
+      .disconnected {
+        background-color: rgba(229, 57, 53, 0.2);
+        color: var(--error);
+      }
+
+      /* Responsive Design */
+      @media (min-width: 992px) {
+        .teacher-dashboard {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .course-management-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .question-header {
+          flex-direction: column;
+          gap: 5px;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .dashboard-container {
+          padding: 10px;
+        }
+
+        .questions-container,
+        .answer-section {
+          padding: 15px;
+        }
+
+        .question-item {
+          padding: 15px;
+        }
       }
     </style>
   </head>
   <body>
     <div id="connectionStatus" class="connection-status disconnected">
-      Disconnected
+      <i class="fas fa-circle"></i> Disconnected
     </div>
 
-    <div class="teacher-dashboard">
-      <h2>Teacher Dashboard</h2>
-      <div class="questions-container">
-        <h3>Student Questions</h3>
-        <div id="question-list" class="question-list">
-          <div class="no-questions">Waiting for student questions...</div>
+    <div class="dashboard-container">
+      <div class="course-management-header">
+        <div class="header-left">
+          <a href="teachers.html" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+          </a>
+          <h2>Teacher Q&A Portal</h2>
         </div>
       </div>
 
-      <div class="answer-section">
-        <h3>Answer a Question</h3>
-        <textarea
-          id="answer-text"
-          placeholder="Select a question to answer..."
-          rows="5"
-          disabled
-        ></textarea>
-        <button id="submit-answer" disabled>Submit Answer</button>
+      <div class="teacher-dashboard">
+        <div class="questions-container">
+          <h3 class="section-heading">
+            <i class="fas fa-question-circle"></i> Student Questions
+          </h3>
+          <div id="question-list" class="question-list">
+            <div class="no-questions">
+              <i class="fas fa-inbox"></i><br />
+              Waiting for student questions...
+            </div>
+          </div>
+        </div>
+
+        <div class="answer-section">
+          <h3 class="section-heading">
+            <i class="fas fa-reply"></i> Answer a Question
+          </h3>
+          <div class="form-group">
+            <textarea
+              id="answer-text"
+              class="form-control"
+              placeholder="Select a question to answer..."
+              rows="5"
+              disabled
+            ></textarea>
+          </div>
+          <button id="submit-answer" class="submit-btn" disabled>
+            <i class="fas fa-paper-plane"></i> Submit Answer
+          </button>
+        </div>
       </div>
     </div>
 
@@ -157,7 +481,8 @@
         // Socket connection events
         socket.on("connect", () => {
           console.log("Socket connected");
-          connectionStatus.textContent = "Connected";
+          connectionStatus.innerHTML =
+            '<i class="fas fa-circle"></i> Connected';
           connectionStatus.className = "connection-status connected";
 
           // Enable interface elements
@@ -166,7 +491,8 @@
 
         socket.on("disconnect", () => {
           console.log("Socket disconnected");
-          connectionStatus.textContent = "Disconnected";
+          connectionStatus.innerHTML =
+            '<i class="fas fa-circle"></i> Disconnected';
           connectionStatus.className = "connection-status disconnected";
 
           // Disable interface elements
@@ -175,7 +501,8 @@
 
         socket.on("connect_error", (error) => {
           console.error("Connection error:", error);
-          connectionStatus.textContent = "Connection Error";
+          connectionStatus.innerHTML =
+            '<i class="fas fa-exclamation-circle"></i> Connection Error';
           connectionStatus.className = "connection-status disconnected";
 
           // Disable interface elements
@@ -203,7 +530,8 @@
         });
       } catch (error) {
         console.error("Socket.io initialization failed:", error);
-        connectionStatus.textContent = "Connection Failed";
+        connectionStatus.innerHTML =
+          '<i class="fas fa-exclamation-circle"></i> Connection Failed';
         connectionStatus.className = "connection-status disconnected";
       }
 
@@ -219,8 +547,11 @@
       // Display all questions
       function displayQuestions(questions) {
         if (!questions || questions.length === 0) {
-          questionList.innerHTML =
-            '<div class="no-questions">No questions yet</div>';
+          questionList.innerHTML = `
+            <div class="no-questions">
+              <i class="fas fa-inbox"></i><br>
+              No questions yet
+            </div>`;
           return;
         }
 
@@ -238,34 +569,37 @@
         questionItem.dataset.questionId = question._id; // Store question ID in dataset for easy access
 
         const hasAnswers = question.answers && question.answers.length > 0;
+        const formattedDate = new Date(question.questionDate).toLocaleString();
 
         questionItem.innerHTML = `
-          <strong>${question.studentName} asked:</strong> ${
-          question.question
-        } <br>
-          <em>Date Asked: ${new Date(
-            question.questionDate
-          ).toLocaleString()}</em>
+          <div class="question-header">
+            <div class="student-info">${question.studentName}</div>
+            <div class="question-date"><i class="far fa-clock"></i> ${formattedDate}</div>
+          </div>
+          <div class="question-content">${question.question}</div>
           <div class="answers">
             ${
               hasAnswers
                 ? question.answers
                     .map(
                       (ans) => `
-                    <p><strong>${ans.teacherName}</strong>: ${
-                        ans.teacherAnswer
-                      }</p>
-                    <em>Date Answered: ${new Date(
-                      ans.answerDate
-                    ).toLocaleString()}</em>
-                  `
+                      <div class="answer-item">
+                        <div class="teacher-name">${ans.teacherName}</div>
+                        <div class="answer-content">${ans.teacherAnswer}</div>
+                        <div class="answer-date"><i class="far fa-clock"></i> ${new Date(
+                          ans.answerDate
+                        ).toLocaleString()}</div>
+                      </div>
+                    `
                     )
                     .join("")
-                : "<p><em>No answers yet</em></p>"
+                : '<p class="no-answers">No answers yet</p>'
             }
           </div>
           <button class="answer-btn" data-id="${question._id}">
-            ${hasAnswers ? "Add another answer" : "Answer this question"}
+            <i class="fas fa-reply"></i> ${
+              hasAnswers ? "Add another answer" : "Answer this question"
+            }
           </button>
         `;
 
@@ -292,6 +626,12 @@
         );
         if (currentQuestion) {
           currentQuestion.classList.add("active-question");
+
+          // Scroll into view if needed
+          currentQuestion.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
         }
 
         currentQuestionId = questionId;
@@ -299,7 +639,7 @@
         submitAnswerButton.disabled = false;
         answerTextArea.value = "";
         answerTextArea.focus();
-        answerTextArea.placeholder = `Type your answer for question #${questionId}...`;
+        answerTextArea.placeholder = `Type your answer here...`;
       }
 
       // Submit the teacher's answer
@@ -319,6 +659,11 @@
             answerDate: new Date(),
           };
 
+          // Add loading state to the button
+          submitAnswerButton.disabled = true;
+          submitAnswerButton.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
           // Emit the new answer to the backend
           socket.emit("new-answer", answer);
 
@@ -326,7 +671,13 @@
           answerTextArea.value = "";
           answerTextArea.placeholder = "Select a question to answer...";
           answerTextArea.disabled = true;
-          submitAnswerButton.disabled = true;
+
+          // Reset button state after a short delay
+          setTimeout(() => {
+            submitAnswerButton.innerHTML =
+              '<i class="fas fa-paper-plane"></i> Submit Answer';
+            submitAnswerButton.disabled = true;
+          }, 1000);
 
           // Remove active state
           const activeQuestion = questionList.querySelector(".active-question");
@@ -341,7 +692,6 @@
       });
 
       // Function to update answers in UI (after teacher answers)
-      // Function to update answers in UI (after teacher answers)
       function updateAnswerInUI(answer) {
         const questionItem = document.querySelector(
           `.question-item[data-question-id="${answer.questionId}"]`
@@ -350,16 +700,20 @@
         if (questionItem) {
           const answersDiv = questionItem.querySelector(".answers");
 
-          // This is the corrected part - don't replace all answers, just add the new one
+          // Create the new answer element with the updated HTML structure
           const newAnswerElement = document.createElement("div");
+          newAnswerElement.classList.add("answer-item");
           newAnswerElement.innerHTML = `
-      <p><strong>${answer.teacherName}</strong>: ${answer.teacherAnswer}</p>
-      <em>Date Answered: ${new Date(answer.answerDate).toLocaleString()}</em>
-    `;
+            <div class="teacher-name">${answer.teacherName}</div>
+            <div class="answer-content">${answer.teacherAnswer}</div>
+            <div class="answer-date"><i class="far fa-clock"></i> ${new Date(
+              answer.answerDate
+            ).toLocaleString()}</div>
+          `;
 
           // Check if there's a "No answers yet" message
-          const noAnswersMsg = answersDiv.querySelector("p > em");
-          if (noAnswersMsg && noAnswersMsg.textContent === "No answers yet") {
+          const noAnswersMsg = answersDiv.querySelector(".no-answers");
+          if (noAnswersMsg) {
             // Replace the empty message
             answersDiv.innerHTML = "";
           }
@@ -370,7 +724,8 @@
           // Update the button text
           const answerBtn = questionItem.querySelector(".answer-btn");
           if (answerBtn) {
-            answerBtn.textContent = "Add another answer";
+            answerBtn.innerHTML =
+              '<i class="fas fa-reply"></i> Add another answer';
           }
         }
       }

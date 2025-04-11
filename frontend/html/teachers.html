@@ -3,8 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teacher Dashboard</title>
+    <title>Teacher Dashboard | Online Learning</title>
     <link rel="stylesheet" href="../styles/dashboard.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const role = localStorage.getItem("role");
@@ -14,317 +18,458 @@
         }
       });
     </script>
-    <style>
-      .notification-wrapper {
-        position: relative;
-        display: inline-block;
-        cursor: pointer;
-      }
-
-      .badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        background: red;
-        color: white;
-        font-size: 12px;
-        border-radius: 50%;
-        padding: 5px 8px;
-        min-width: 15px;
-        text-align: center;
-      }
-
-      .dropdown {
-        position: absolute;
-        top: 40px;
-        right: 0;
-        background: white;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        width: 300px;
-        max-height: 400px;
-        overflow-y: auto;
-        border-radius: 5px;
-        z-index: 1000;
-      }
-
-      .hidden {
-        display: none !important;
-      }
-
-      .notification-card {
-        padding: 15px;
-        border-bottom: 1px solid #ddd;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
-
-      .notification-card:hover {
-        background-color: #f0f0f0;
-      }
-
-      .notification-card.unread {
-        background: #e6f7ff;
-        border-left: 3px solid #1890ff;
-      }
-
-      .notification-card p {
-        margin: 0 0 8px 0;
-      }
-
-      .notification-card small {
-        display: block;
-        color: #999;
-        font-size: 0.8em;
-        margin-bottom: 8px;
-      }
-
-      .notification-card .mark-read {
-        padding: 5px 10px;
-        background: #f0f0f0;
-        border: 1px solid #ddd;
-        border-radius: 3px;
-        cursor: pointer;
-        font-size: 0.8em;
-      }
-
-      .notification-card .mark-read:hover {
-        background: #e0e0e0;
-      }
-
-      .clear-btn {
-        width: 100%;
-        padding: 10px;
-        background: #ff4d4f;
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.3s;
-      }
-
-      .clear-btn:hover {
-        background: #ff7875;
-      }
-      /* The Modal (background) */
-      .modal {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 1; /* Sit on top */
-        left: 0;
-        top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        overflow: auto; /* Enable scroll if needed */
-        background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-      }
-
-      /* Modal Content/Box */
-      .modal-content {
-        background-color: #fefefe;
-        margin: 15% auto; /* 15% from the top and centered */
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%; /* Could be more or less, depending on screen size */
-        max-width: 600px;
-        border-radius: 5px;
-        position: relative;
-      }
-
-      /* The Close Button */
-      .close {
-        position: absolute;
-        right: 10px;
-        top: 0;
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-        cursor: pointer;
-      }
-
-      .close:hover,
-      .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-      }
-      .accept {
-        background-color: #4caf50;
-        color: white;
-
-        padding: 5px;
-
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.3s;
-      }
-      .reject {
-        background-color: #f44336;
-        color: white;
-        padding: 5px;
-        border-radius: 3px;
-        border: none;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.3s;
-      }
-    </style>
   </head>
   <body>
     <div class="dashboard">
-      <!-- Sidebar with toggle button inside -->
+      <!-- Sidebar -->
       <aside class="sidebar" id="sidebar">
         <h2>Online Learning</h2>
-        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-        <ul id="courseList">
-          <li>Course 1</li>
-          <li>Course 2</li>
-          <li>Course 3</li>
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <ul>
+          <li class="active">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+          </li>
+          <li>
+            <i class="fas fa-book"></i>
+            <span>My Courses</span>
+          </li>
+          <li>
+            <i class="fas fa-video"></i>
+            <span>Lectures</span>
+          </li>
+          <li>
+            <i class="fas fa-tasks"></i>
+            <span>Assignments</span>
+          </li>
+          <li>
+            <i class="fas fa-comments"></i>
+            <span>Discussions</span>
+          </li>
+          <li>
+            <i class="fas fa-users"></i>
+            <span>Students</span>
+          </li>
+          <li>
+            <i class="fas fa-chart-line"></i>
+            <span>Analytics</span>
+          </li>
+          <li>
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+          </li>
         </ul>
       </aside>
+
       <!-- Main Content -->
       <main class="main-content" id="mainContent">
         <!-- Top Bar -->
         <div class="top-bar">
-          <!-- Removed menu toggle from here -->
+          <button class="menu-toggle-mobile" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">Teacher Dashboard</div>
           <div class="right-icons">
-            <!-- Plus Icon Button -->
-
             <div class="notification-wrapper">
-              <img
-                src="./notification.png"
-                alt="Notifications"
-                class="icon"
-                id="notification-icon"
-              />
-              <span id="notification-count" class="badge">0</span>
+              <i class="fas fa-bell icon" id="notification-icon"></i>
+              <span id="notification-count" class="badge">3</span>
 
               <div id="notification-dropdown" class="dropdown hidden">
-                <div id="notifications-container"></div>
+                <div id="notifications-container">
+                  <div class="notification-card unread">
+                    <p>New assignment submission from John Doe</p>
+                    <small>2 hours ago</small>
+                    <button class="mark-read">Mark as read</button>
+                  </div>
+                  <div class="notification-card unread">
+                    <p>Farhan asked a question in Advanced JavaScript course</p>
+                    <small>Yesterday</small>
+                    <button class="mark-read">Mark as read</button>
+                  </div>
+                  <div class="notification-card">
+                    <p>Your course "Web Development" was approved</p>
+                    <small>2 days ago</small>
+                  </div>
+                </div>
                 <button id="clear-notifications" class="clear-btn">
                   Clear All
                 </button>
               </div>
             </div>
+            <img
+              src="https://ui-avatars.com/api/?name=Teacher&background=4a6de5&color=fff"
+              alt="Profile"
+              class="profile-icon"
+            />
+          </div>
+        </div>
 
-            <img src="assets/profile.png" alt="Profile" class="icon" />
+        <!-- Page Header -->
+        <div class="page-header">
+          <h1 class="header-title">Welcome back, Teacher!</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary">
+              <i class="fas fa-plus"></i> New Course
+            </button>
+            <button class="btn btn-secondary">
+              <i class="fas fa-video"></i> Schedule Class
+            </button>
           </div>
         </div>
 
         <!-- Dashboard Cards -->
         <div class="dashboard-grid">
           <div class="card" id="manageCoursesCard">
-            <div class="card-icon">📚</div>
-            Create & Manage Courses
+            <div class="card-icon">
+              <i class="fas fa-book-open"></i>
+            </div>
+            <span>Create & Manage Courses</span>
           </div>
+
           <div class="card" id="Upload-document">
-            <div class="card-icon">🎬</div>
-            Upload & Manage Lectures
+            <div class="card-icon">
+              <i class="fas fa-video"></i>
+            </div>
+            <span>Upload & Manage Lectures</span>
           </div>
 
           <div class="card" id="Upload-assignment">
-            <div class="card-icon">📝</div>
-            Assignments & Grading
+            <div class="card-icon">
+              <i class="fas fa-tasks"></i>
+            </div>
+            <span>Assignments & Grading</span>
           </div>
+
           <div class="card" id="question">
-            <div class="card-icon">💬</div>
-            Student Queries & Discussions
+            <div class="card-icon">
+              <i class="fas fa-comments"></i>
+            </div>
+            <span>Student Queries & Discussions</span>
           </div>
-          <div class="card">
-            <div class="card-icon">🎯</div>
-            Live Class Management
+
+          <div class="card" id="live-classes">
+            <div class="card-icon">
+              <i class="fas fa-video-camera"></i>
+            </div>
+            <span>Live Class Management</span>
           </div>
+
           <div class="card" id="announcement">
-            <div class="card-icon">📢</div>
-            Announcements & Notifications
+            <div class="card-icon">
+              <i class="fas fa-bullhorn"></i>
+            </div>
+            <span>Announcements & Notifications</span>
+          </div>
+        </div>
+
+        <!-- Course Stats Section -->
+        <div class="page-header">
+          <h2 class="header-title">Your Courses</h2>
+          <div class="header-actions">
+            <button class="btn btn-secondary">
+              <i class="fas fa-filter"></i> Filter
+            </button>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card course-card">
+            <div class="course-image">
+              <img
+                src="https://via.placeholder.com/300x160?text=Web+Development"
+                alt="Web Development"
+              />
+            </div>
+            <h3>Web Development</h3>
+            <div class="course-stats">
+              <div class="stat">
+                <i class="fas fa-user-graduate"></i> 24 Students
+              </div>
+              <div class="stat"><i class="fas fa-star"></i> 4.8/5</div>
+            </div>
+            <button class="btn btn-primary">Manage</button>
+          </div>
+
+          <div class="card course-card">
+            <div class="course-image">
+              <img
+                src="https://via.placeholder.com/300x160?text=JavaScript+Basics"
+                alt="JavaScript Basics"
+              />
+            </div>
+            <h3>JavaScript Basics</h3>
+            <div class="course-stats">
+              <div class="stat">
+                <i class="fas fa-user-graduate"></i> 18 Students
+              </div>
+              <div class="stat"><i class="fas fa-star"></i> 4.5/5</div>
+            </div>
+            <button class="btn btn-primary">Manage</button>
+          </div>
+
+          <div class="card course-card">
+            <div class="course-image">
+              <img
+                src="https://via.placeholder.com/300x160?text=Database+Design"
+                alt="Database Design"
+              />
+            </div>
+            <h3>Database Design</h3>
+            <div class="course-stats">
+              <div class="stat">
+                <i class="fas fa-user-graduate"></i> 16 Students
+              </div>
+              <div class="stat"><i class="fas fa-star"></i> 4.7/5</div>
+            </div>
+            <button class="btn btn-primary">Manage</button>
           </div>
         </div>
       </main>
     </div>
+
     <!-- Enrollment Request Modal -->
-    <button id="startCall">Start Video Call</button>
-    <iframe
-      id="videoCallFrame"
-      width="800"
-      height="600"
-      allow="camera; microphone; autoplay; fullscreen"
-    ></iframe>
-    <script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
+    <div id="enrollmentModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Student Enrollment Request</h3>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <p>
+            <strong>Student:</strong>
+            <span id="requestStudentName">John Doe</span>
+          </p>
+          <p>
+            <strong>Course:</strong>
+            <span id="requestCourseName">Web Development Fundamentals</span>
+          </p>
+          <p>
+            <strong>Request Date:</strong>
+            <span id="requestDate">Jun 10, 2023</span>
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button id="rejectButton" class="btn btn-danger">Reject</button>
+          <button id="acceptButton" class="btn btn-success">Accept</button>
+        </div>
+      </div>
+    </div>
 
-    <!-- <script src="../js/script.js"></script> -->
+    <!-- Video Call Modal -->
+    <div id="videoCallModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Video Call</h3>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div id="videoCallContainer">
+            <iframe
+              id="videoCallFrame"
+              width="100%"
+              height="400"
+              frameborder="0"
+              allow="camera; microphone; fullscreen; display-capture"
+              style="border-radius: 10px"
+            ></iframe>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="endCallButton" class="btn btn-danger">End Call</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/videoCall.js"></script>
     <script>
+      // Notification dropdown toggle
       document
-        .getElementById("startCall")
-        .addEventListener("click", async () => {
-          try {
-            const response = await fetch(
-              "http://localhost:5000/api/video/create-room",
-              {
-                method: "POST",
-              }
-            );
-            const data = await response.json();
-            document.getElementById("videoCallFrame").src = data.roomUrl;
-            const roomUrl = data.roomUrl; // Make sure `data.roomUrl` is not undefined
-            if (!roomUrl) {
-              console.error("Error: Room URL is undefined.");
-            } else {
-              window.location.href = roomUrl; // Navigating to a meeting room
-            }
-          } catch (error) {
-            console.error("Error starting call:", error);
-          }
+        .getElementById("notification-icon")
+        .addEventListener("click", function () {
+          document
+            .getElementById("notification-dropdown")
+            .classList.toggle("hidden");
         });
 
-      document
-        .getElementById("manageCoursesCard")
-        .addEventListener("click", () => {
-          window.location.href = "manage-courses.html"; // Redirect to course management page
-        });
-      document.getElementById("question").addEventListener("click", () => {
-        window.location.href = "questionTeacher.html"; // Redirect to course management page
+      // Close dropdown when clicking outside
+      document.addEventListener("click", function (event) {
+        const dropdown = document.getElementById("notification-dropdown");
+        const icon = document.getElementById("notification-icon");
+
+        if (!dropdown.contains(event.target) && event.target !== icon) {
+          dropdown.classList.add("hidden");
+        }
       });
-      document
-        .getElementById("Upload-assignment")
-        .addEventListener("click", () => {
-          window.location.href = "assignment-teacher.html"; // Redirect to assignment page
+
+      // Mark notification as read
+      const markReadButtons = document.querySelectorAll(".mark-read");
+      markReadButtons.forEach((button) => {
+        button.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const card = this.closest(".notification-card");
+          card.classList.remove("unread");
+          updateNotificationCount();
         });
-      document.getElementById("announcement").addEventListener("click", () => {
-        window.location.href = "announement-teacher.html"; // Redirect to assignment page
       });
+
+      // Clear notifications
+      document
+        .getElementById("clear-notifications")
+        .addEventListener("click", function () {
+          document.getElementById("notifications-container").innerHTML = "";
+          updateNotificationCount();
+        });
+
+      // Update notification count
+      function updateNotificationCount() {
+        const unreadCount = document.querySelectorAll(
+          ".notification-card.unread"
+        ).length;
+        const badge = document.getElementById("notification-count");
+
+        badge.textContent = unreadCount;
+
+        if (unreadCount === 0) {
+          badge.style.display = "none";
+        } else {
+          badge.style.display = "flex";
+        }
+      }
+
+      // Initialize notification count
+      updateNotificationCount();
 
       // Sidebar toggle function
       function toggleSidebar() {
-        document.body.classList.toggle("sidebar-collapsed");
+        const isMobile = window.innerWidth <= 768;
 
-        // Save the state to localStorage
+        if (isMobile) {
+          // On mobile, we need to specifically handle showing/hiding the sidebar
+          document.body.classList.toggle("sidebar-active");
+        } else {
+          // On desktop, toggle the collapsed state
+          document.body.classList.toggle("sidebar-collapsed");
+        }
+
+        // Save the sidebar state to localStorage
         const isSidebarCollapsed =
           document.body.classList.contains("sidebar-collapsed");
         localStorage.setItem("sidebar-collapsed", isSidebarCollapsed);
+
+        const isSidebarActive =
+          document.body.classList.contains("sidebar-active");
+        localStorage.setItem("sidebar-active", isSidebarActive);
       }
+
+      // Check saved sidebar state on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        const isMobile = window.innerWidth <= 768;
+
+        // Check localStorage for saved states
+        const isSidebarCollapsed =
+          localStorage.getItem("sidebar-collapsed") === "true";
+        const isSidebarActive =
+          localStorage.getItem("sidebar-active") === "true";
+
+        if (isMobile) {
+          // On mobile devices, restore sidebar active state
+          if (isSidebarActive) {
+            document.body.classList.add("sidebar-active");
+          }
+        } else {
+          // On desktop, restore collapsed state
+          if (isSidebarCollapsed) {
+            document.body.classList.add("sidebar-collapsed");
+          }
+        }
+
+        // Make sidebar items clickable for navigation
+        document.querySelectorAll(".sidebar li").forEach((item) => {
+          item.addEventListener("click", function () {
+            // Remove active class from all items
+            document.querySelectorAll(".sidebar li").forEach((li) => {
+              li.classList.remove("active");
+            });
+
+            // Add active class to clicked item
+            this.classList.add("active");
+
+            // Here you would normally navigate to different sections
+            // For now we'll just handle the main dashboard sections
+            const text = this.querySelector("span").textContent;
+            if (text === "Dashboard") {
+              // Already on dashboard
+            } else if (text === "My Courses") {
+              document
+                .querySelector(".page-header .header-title")
+                .scrollIntoView({ behavior: "smooth" });
+            }
+
+            // Close sidebar on mobile after navigation
+            if (isMobile) {
+              document.body.classList.remove("sidebar-active");
+            }
+          });
+        });
+      });
+
+      // Listen for window resize to adjust sidebar behavior
+      window.addEventListener("resize", () => {
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+          // On mobile, remove collapsed and use active instead
+          document.body.classList.remove("sidebar-collapsed");
+        } else {
+          // On desktop, remove active and use collapsed instead
+          document.body.classList.remove("sidebar-active");
+        }
+      });
+
+      // Add event listeners for the main dashboard cards
+      document
+        .getElementById("manageCoursesCard")
+        .addEventListener("click", () => {
+          window.location.href = "manage-courses.html";
+        });
+
       document
         .getElementById("Upload-document")
         .addEventListener("click", () => {
           window.location.href = "upload-lectures.html";
         });
-      // Check saved sidebar state on page load
-      document.addEventListener("DOMContentLoaded", () => {
-        const isSidebarCollapsed =
-          localStorage.getItem("sidebar-collapsed") === "true";
-        if (isSidebarCollapsed) {
-          document.body.classList.add("sidebar-collapsed");
-        } else {
-          // On mobile, collapse by default
-          const isMobile = window.innerWidth <= 992;
-          if (
-            isMobile &&
-            !document.body.classList.contains("sidebar-collapsed")
-          ) {
-            document.body.classList.add("sidebar-collapsed");
+
+      document
+        .getElementById("Upload-assignment")
+        .addEventListener("click", () => {
+          window.location.href = "assignment-teacher.html";
+        });
+
+      document.getElementById("question").addEventListener("click", () => {
+        window.location.href = "questionTeacher.html";
+      });
+
+      document.getElementById("announcement").addEventListener("click", () => {
+        window.location.href = "announement-teacher.html";
+      });
+
+      // Close modals when clicking the close button or outside
+      document.querySelectorAll(".close").forEach((closeBtn) => {
+        closeBtn.addEventListener("click", function () {
+          this.closest(".modal").style.display = "none";
+        });
+      });
+
+      // Close modal when clicking outside the modal content
+      window.addEventListener("click", function (event) {
+        document.querySelectorAll(".modal").forEach((modal) => {
+          if (event.target === modal) {
+            modal.style.display = "none";
           }
-        }
+        });
       });
     </script>
   </body>

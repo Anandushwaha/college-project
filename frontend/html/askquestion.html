@@ -3,29 +3,52 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Q&A Interface</title>
+    <title>Student Discussions | Online Learning</title>
+    <link rel="stylesheet" href="../styles/student-dashboard.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <!-- Load Socket.io client from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
     <style>
-      /* Floating Button Styling (Bottom-right corner) */
+      /* Ask Question Page Specific Styles */
+      .content-wrapper {
+        padding: 0 30px 30px;
+      }
+
+      /* Floating Button Styling */
       .floating-btn {
         position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-        background-color: #4caf50;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--secondary-color) 100%
+        );
         color: white;
         border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 24px;
-        text-align: center;
-        line-height: 50px;
         cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+        z-index: 990;
+        border: none;
       }
 
       .floating-btn:hover {
-        background-color: #45a049;
+        transform: translateY(-5px) rotate(90deg);
+        box-shadow: var(--shadow-lg);
       }
 
       /* Modal Styling */
@@ -40,132 +63,518 @@
         justify-content: center;
         align-items: center;
         z-index: 1000;
+        animation: fadeIn 0.3s ease;
+        backdrop-filter: blur(4px);
       }
 
       .modal-content {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        width: 400px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: var(--white);
+        padding: 30px;
+        border-radius: var(--border-radius);
+        width: 90%;
+        max-width: 500px;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        animation: slideUp 0.4s ease;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .modal-header h2 {
+        font-size: 22px;
+        color: var(--text-dark);
+        font-weight: 600;
+        margin: 0;
       }
 
       .close-btn {
-        font-size: 30px;
-        color: #333;
-        position: absolute;
-        top: 10px;
-        right: 10px;
+        font-size: 24px;
+        color: var(--text-light);
+        background: none;
+        border: none;
         cursor: pointer;
+        transition: var(--transition-fast);
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+      }
+
+      .close-btn:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+        color: var(--error);
       }
 
       textarea {
         width: 100%;
         height: 150px;
         padding: 15px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        margin-bottom: 15px;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        font-family: "Inter", sans-serif;
+        font-size: 15px;
+        resize: vertical;
+        transition: var(--transition-fast);
+        box-shadow: var(--shadow-sm);
+      }
+
+      textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(74, 109, 229, 0.15);
       }
 
       .submit-btn {
         width: 100%;
-        padding: 10px;
-        background-color: #4caf50;
+        padding: 14px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--secondary-color) 100%
+        );
         color: white;
         border: none;
-        border-radius: 5px;
+        border-radius: var(--border-radius);
         cursor: pointer;
+        font-weight: 600;
+        font-size: 16px;
+        transition: var(--transition-fast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
 
       .submit-btn:hover {
-        background-color: #45a049;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+      }
+
+      .submit-btn:disabled {
+        background: var(--text-light);
+        cursor: not-allowed;
+        transform: none;
       }
 
       /* Questions List Styling */
       .question-list {
-        padding: 20px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        animation: fadeIn 0.5s ease-out forwards;
       }
 
       .question-item {
-        margin-bottom: 30px;
-        background-color: #f9f9f9;
+        background-color: var(--white);
         padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #e0e0e0;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        animation: slideUp 0.5s ease-out forwards;
+      }
+
+      .question-item:hover {
+        box-shadow: var(--shadow);
+        border-color: rgba(74, 109, 229, 0.2);
       }
 
       .question-item .question {
-        background-color: #e8f5e9;
-        padding: 15px;
-        border-radius: 6px;
+        background-color: rgba(74, 109, 229, 0.05);
+        padding: 15px 20px;
+        border-radius: var(--border-radius);
         margin-bottom: 15px;
+        border-left: 4px solid var(--primary-color);
+      }
+
+      .question-item .answers {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
       }
 
       .question-item .answer {
-        background-color: #f1f8e9;
-        padding: 15px;
-        border-radius: 6px;
+        background-color: rgba(140, 102, 219, 0.05);
+        padding: 15px 20px;
+        border-radius: var(--border-radius);
+        margin-left: 20px;
+        border-left: 4px solid var(--secondary-color);
+      }
+
+      .waiting-answer {
+        color: var(--text-light);
+        font-style: italic;
+        margin-left: 20px;
+        padding: 15px 20px;
+        background-color: rgba(0, 0, 0, 0.02);
+        border-radius: var(--border-radius);
+        border: 1px dashed rgba(0, 0, 0, 0.1);
       }
 
       .timestamp {
         font-size: 12px;
-        color: #777;
+        color: var(--text-light);
+        margin-top: 5px;
+        display: block;
       }
 
+      .student-name,
+      .teacher-name {
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: var(--text-dark);
+      }
+
+      .question-text,
+      .answer-text {
+        margin: 10px 0;
+        line-height: 1.5;
+      }
+
+      /* Connection Status */
       .connection-status {
         position: fixed;
-        top: 10px;
-        right: 10px;
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-size: 12px;
+        top: 80px;
+        right: 20px;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition-fast);
+        animation: slideLeft 0.3s ease;
+      }
+
+      @keyframes slideLeft {
+        from {
+          transform: translateX(50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
       }
 
       .connected {
-        background-color: #4caf50;
+        background-color: var(--success);
         color: white;
       }
 
       .disconnected {
-        background-color: #f44336;
+        background-color: var(--error);
         color: white;
       }
+
+      /* Empty state */
+      .empty-state {
+        text-align: center;
+        padding: 60px 30px;
+        background-color: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        margin: 30px 0;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+
+      .empty-icon {
+        font-size: 60px;
+        color: var(--secondary-light);
+        margin-bottom: 20px;
+      }
+
+      .empty-text {
+        font-size: 18px;
+        color: var(--text-light);
+        margin-bottom: 25px;
+      }
+
+      /* Loading indicator */
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-light);
+      }
+
+      .loading i {
+        font-size: 30px;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+      }
+
+      @media (max-width: 768px) {
+        .content-wrapper {
+          padding: 0 15px 15px;
+        }
+
+        .floating-btn {
+          bottom: 20px;
+          right: 20px;
+          width: 50px;
+          height: 50px;
+        }
+
+        .modal-content {
+          width: 95%;
+          padding: 20px;
+        }
+
+        .question-item {
+          padding: 15px;
+        }
+
+        .question-item .question,
+        .question-item .answer {
+          padding: 12px 15px;
+        }
+
+        .question-item .answer {
+          margin-left: 10px;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .modal-header h2 {
+          font-size: 18px;
+        }
+
+        textarea {
+          height: 120px;
+        }
+
+        .submit-btn {
+          padding: 12px;
+        }
+      }
     </style>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const role = localStorage.getItem("role");
+        if (role !== "student") {
+          alert("Access Denied");
+          window.location.href = "../index.html";
+        }
+      });
+    </script>
   </head>
   <body>
-    <!-- Connection Status Indicator -->
-    <div id="connectionStatus" class="connection-status disconnected">
-      Disconnected
+    <div class="dashboard">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <h2>Online Learning</h2>
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <ul id="courseList">
+          <li>
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+          </li>
+          <li>
+            <i class="fas fa-book"></i>
+            <span>My Courses</span>
+          </li>
+          <li>
+            <i class="fas fa-video"></i>
+            <span>Live Classes</span>
+          </li>
+          <li>
+            <i class="fas fa-tasks"></i>
+            <span>Assignments</span>
+          </li>
+          <li>
+            <i class="fas fa-file-alt"></i>
+            <span>Study Materials</span>
+          </li>
+          <li class="active">
+            <i class="fas fa-comments"></i>
+            <span>Discussions</span>
+          </li>
+          <li>
+            <i class="fas fa-briefcase"></i>
+            <span>Job Board</span>
+          </li>
+          <li>
+            <i class="fas fa-user-cog"></i>
+            <span>Profile</span>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- Mobile menu overlay -->
+      <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+      <!-- Main Content -->
+      <main class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <div class="top-bar">
+          <button class="menu-toggle-mobile" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">Discussions</div>
+          <div class="right-icons">
+            <div class="icon" id="notification-icon">
+              <i class="fas fa-bell"></i>
+            </div>
+            <img
+              src="https://ui-avatars.com/api/?name=Student&background=4a6de5&color=fff"
+              alt="Profile"
+              class="profile-icon"
+            />
+          </div>
+        </div>
+
+        <div class="content-wrapper">
+          <div class="page-header">
+            <h1 class="header-title">Student Discussions</h1>
+            <div class="header-actions">
+              <a href="student.html" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+              </a>
+            </div>
+          </div>
+
+          <!-- Connection Status Indicator -->
+          <div id="connectionStatus" class="connection-status disconnected">
+            <i class="fas fa-plug"></i> Disconnected
+          </div>
+
+          <!-- Questions List -->
+          <div id="questionList" class="question-list">
+            <div class="loading">
+              <i class="fas fa-spinner fa-spin"></i>
+              <p>Connecting to discussion server...</p>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
 
     <!-- Floating Button (Bottom Right Corner) -->
-    <div class="floating-btn" id="askQuestionBtn">
-      <span>+</span>
-    </div>
+    <button class="floating-btn" id="askQuestionBtn">
+      <i class="fas fa-plus"></i>
+    </button>
 
     <!-- Modal for Asking a Question -->
     <div class="modal" id="askModal">
       <div class="modal-content">
-        <span class="close-btn" id="closeModalBtn">&times;</span>
-        <h2>Ask a Question</h2>
+        <div class="modal-header">
+          <h2>Ask a Question</h2>
+          <button class="close-btn" id="closeModalBtn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
         <form id="askForm">
           <textarea
             id="studentQuestion"
-            placeholder="Type your question..."
+            placeholder="Type your question here... Be specific about what you're asking to get the best answers."
             required
           ></textarea>
-          <button type="submit" class="submit-btn">Submit Question</button>
+          <button type="submit" class="submit-btn" id="submitBtn">
+            <i class="fas fa-paper-plane"></i> Submit Question
+          </button>
         </form>
       </div>
     </div>
 
-    <!-- Questions List -->
-    <div id="questionList" class="question-list">
-      <!-- Questions will be dynamically added here -->
-    </div>
-
+    <script src="../js/script.js"></script>
     <script>
+      // Sidebar toggle function
+      function toggleSidebar() {
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+          document.body.classList.toggle("sidebar-active");
+        } else {
+          document.body.classList.toggle("sidebar-collapsed");
+        }
+
+        // Save the state to localStorage
+        const isSidebarCollapsed =
+          document.body.classList.contains("sidebar-collapsed");
+        localStorage.setItem("sidebar-collapsed", isSidebarCollapsed);
+
+        const isSidebarActive =
+          document.body.classList.contains("sidebar-active");
+        localStorage.setItem("sidebar-active", isSidebarActive);
+      }
+
+      // Check saved sidebar state on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        const isMobile = window.innerWidth <= 768;
+
+        // Check localStorage for saved states
+        const isSidebarCollapsed =
+          localStorage.getItem("sidebar-collapsed") === "true";
+        const isSidebarActive =
+          localStorage.getItem("sidebar-active") === "true";
+
+        if (isMobile) {
+          // On mobile devices, restore sidebar active state
+          if (isSidebarActive) {
+            document.body.classList.add("sidebar-active");
+          }
+        } else {
+          // On desktop, restore collapsed state
+          if (isSidebarCollapsed) {
+            document.body.classList.add("sidebar-collapsed");
+          }
+        }
+
+        // Make sidebar items clickable for navigation
+        document.querySelectorAll(".sidebar li").forEach((item) => {
+          item.addEventListener("click", function () {
+            if (this.classList.contains("active")) return;
+
+            // Get the text of the clicked item
+            const text = this.querySelector("span").textContent;
+
+            if (text === "Dashboard") {
+              window.location.href = "student.html";
+            } else if (text === "My Courses") {
+              window.location.href = "manage-course-student.html";
+            } else if (text === "Live Classes") {
+              window.location.href = "student.html"; // Redirect and handle on dashboard
+            } else if (text === "Assignments") {
+              window.location.href = "assignment.html";
+            } else if (text === "Study Materials") {
+              window.location.href = "notes.html";
+            } else if (text === "Discussions") {
+              // Already on this page
+            } else if (text === "Job Board") {
+              window.location.href = "job.html";
+            }
+          });
+        });
+      });
+
+      // Window resize event listener
+      window.addEventListener("resize", () => {
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+          // On mobile, remove collapsed and use active instead
+          document.body.classList.remove("sidebar-collapsed");
+        } else {
+          // On desktop, remove active and use collapsed instead
+          document.body.classList.remove("sidebar-active");
+        }
+      });
+
       // DOM elements
       const askQuestionBtn = document.getElementById("askQuestionBtn");
       const askModal = document.getElementById("askModal");
@@ -174,11 +583,12 @@
       const studentQuestionInput = document.getElementById("studentQuestion");
       const questionList = document.getElementById("questionList");
       const connectionStatus = document.getElementById("connectionStatus");
+      const submitBtn = document.getElementById("submitBtn");
 
       // Modal functionality - independent of Socket.io
       askQuestionBtn.addEventListener("click", () => {
-        console.log("Button clicked!"); // Debugging line
         askModal.style.display = "flex";
+        studentQuestionInput.focus();
       });
 
       // Close Modal
@@ -204,19 +614,21 @@
         // Socket connection events
         socket.on("connect", () => {
           console.log("Socket connected");
-          connectionStatus.textContent = "Connected";
+          connectionStatus.innerHTML = '<i class="fas fa-plug"></i> Connected';
           connectionStatus.className = "connection-status connected";
         });
 
         socket.on("disconnect", () => {
           console.log("Socket disconnected");
-          connectionStatus.textContent = "Disconnected";
+          connectionStatus.innerHTML =
+            '<i class="fas fa-plug"></i> Disconnected';
           connectionStatus.className = "connection-status disconnected";
         });
 
         socket.on("connect_error", (error) => {
           console.error("Connection error:", error);
-          connectionStatus.textContent = "Connection Error";
+          connectionStatus.innerHTML =
+            '<i class="fas fa-exclamation-triangle"></i> Connection Error';
           connectionStatus.className = "connection-status disconnected";
         });
 
@@ -235,23 +647,46 @@
           // Clear the list first
           questionList.innerHTML = "";
 
+          if (questions.length === 0) {
+            questionList.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-comments"></i></div>
+                <div class="empty-text">No questions have been asked yet. Be the first to start a discussion!</div>
+              </div>
+            `;
+            return;
+          }
+
           // Add each question to the UI
-          questions.forEach((question) => {
-            addQuestionToUI(question);
+          questions.forEach((question, index) => {
+            addQuestionToUI(question, index);
           });
         });
       } catch (error) {
         console.error("Socket.io initialization failed:", error);
-        connectionStatus.textContent = "Connection Failed";
+        connectionStatus.innerHTML =
+          '<i class="fas fa-exclamation-triangle"></i> Connection Failed';
         connectionStatus.className = "connection-status disconnected";
+
+        questionList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="empty-text">Failed to connect to discussion server. Please try again later.</div>
+          </div>
+        `;
       }
 
       // Submit Question (Student asks a question)
       askForm.addEventListener("submit", function (e) {
         e.preventDefault();
 
+        // Disable submit button while processing
+        submitBtn.disabled = true;
+        submitBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
         const studentQuestion = studentQuestionInput.value.trim();
-        const studentName = "Student Name"; // Replace with actual student name
+        const studentName = localStorage.getItem("name") || "Student"; // Get name from localStorage if available
 
         if (studentQuestion) {
           const questionData = {
@@ -266,15 +701,31 @@
             // Clear input field after submission
             studentQuestionInput.value = "";
             askModal.style.display = "none";
+
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML =
+              '<i class="fas fa-paper-plane"></i> Submit Question';
           } else {
             alert("Cannot submit question: Not connected to server");
             console.error("Socket not connected, cannot send question");
+
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML =
+              '<i class="fas fa-paper-plane"></i> Submit Question';
           }
         }
       });
 
       // Function to add a question to the UI
-      function addQuestionToUI(questionData) {
+      function addQuestionToUI(questionData, index = 0) {
+        // Remove loading message if it exists
+        const loadingMessage = document.querySelector(".loading");
+        if (loadingMessage) {
+          loadingMessage.remove();
+        }
+
         const {
           _id,
           question,
@@ -286,14 +737,16 @@
         const questionItem = document.createElement("div");
         questionItem.classList.add("question-item");
         questionItem.dataset.questionId = _id;
+        questionItem.style.setProperty("--index", index); // For staggered animation
 
         // Format the question
         questionItem.innerHTML = `
           <div class="question">
-            <p><strong>${studentName}:</strong> ${question}</p>
-            <p class="timestamp">Asked on: ${new Date(
+            <div class="student-name">${studentName}</div>
+            <div class="question-text">${question}</div>
+            <span class="timestamp"><i class="fas fa-clock"></i> ${new Date(
               questionDate
-            ).toLocaleString()}</p>
+            ).toLocaleString()}</span>
           </div>
           <div class="answers">
             ${
@@ -302,27 +755,35 @@
                     .map(
                       (ans) => `
                   <div class="answer">
-                    <p><strong>${ans.teacherName}:</strong> ${
-                        ans.teacherAnswer
-                      }</p>
-                    <p class="timestamp">Answered on: ${new Date(
+                    <div class="teacher-name">${ans.teacherName}</div>
+                    <div class="answer-text">${ans.teacherAnswer}</div>
+                    <span class="timestamp"><i class="fas fa-clock"></i> ${new Date(
                       ans.answerDate
-                    ).toLocaleString()}</p>
+                    ).toLocaleString()}</span>
                   </div>
                 `
                     )
                     .join("")
-                : `<div class="answer">
-                  <p><em>Waiting for teacher response...</em></p>
-                </div>`
+                : `<div class="waiting-answer">
+                    <i class="fas fa-hourglass-half"></i> Waiting for teacher response...
+                  </div>`
             }
           </div>
         `;
 
-        questionList.appendChild(questionItem);
+        // Either prepend or append depending on if it's a new question
+        const isNewQuestion = !document.querySelector(
+          `.question-item[data-question-id="${_id}"]`
+        );
+        if (isNewQuestion && index === 0) {
+          // If it's a brand new question, prepend it to the list
+          questionList.insertBefore(questionItem, questionList.firstChild);
+        } else {
+          // Otherwise append it (used when loading all questions)
+          questionList.appendChild(questionItem);
+        }
       }
 
-      // Function to update an answer in the UI
       // Function to update an answer in the UI
       function updateAnswerInUI(answerData) {
         const { questionId, teacherName, teacherAnswer, answerDate } =
@@ -336,11 +797,8 @@
           const answersDiv = questionItem.querySelector(".answers");
 
           // Check if there's a waiting message
-          const waitingMsg = answersDiv.querySelector("p > em");
-          if (
-            waitingMsg &&
-            waitingMsg.textContent === "Waiting for teacher response..."
-          ) {
+          const waitingMsg = answersDiv.querySelector(".waiting-answer");
+          if (waitingMsg) {
             // Clear the "waiting" message before adding the first answer
             answersDiv.innerHTML = "";
           }
@@ -349,11 +807,15 @@
           const newAnswerElement = document.createElement("div");
           newAnswerElement.className = "answer";
           newAnswerElement.innerHTML = `
-      <p><strong>${teacherName}:</strong> ${teacherAnswer}</p>
-      <p class="timestamp">Answered on: ${new Date(
-        answerDate
-      ).toLocaleString()}</p>
-    `;
+            <div class="teacher-name">${teacherName}</div>
+            <div class="answer-text">${teacherAnswer}</div>
+            <span class="timestamp"><i class="fas fa-clock"></i> ${new Date(
+              answerDate
+            ).toLocaleString()}</span>
+          `;
+
+          // Add animation
+          newAnswerElement.style.animation = "slideUp 0.5s ease forwards";
 
           // Append the new answer
           answersDiv.appendChild(newAnswerElement);
