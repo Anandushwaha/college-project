@@ -280,4 +280,324 @@ router.post("/create-room", async (req, res) => {
   }
 });
 
+// Teacher sends invitation to a student
+router.post("/invite", authMiddleware, async (req, res) => {
+  try {
+    const { courseId, studentEmail, message } = req.body;
+    const teacherId = req.user.id;
+
+    // Verify the teacher role
+    if (req.user.role !== "teacher") {
+      return res
+        .status(403)
+        .json({ message: "Only teachers can send invitations" });
+    }
+
+    // Validate required fields
+    if (!courseId || !studentEmail) {
+      return res
+        .status(400)
+        .json({ message: "Course ID and student email are required" });
+    }
+
+    // Find the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Verify course ownership
+    if (course.teacherId.toString() !== teacherId) {
+      return res
+        .status(403)
+        .json({ message: "You can only invite students to your own courses" });
+    }
+
+    // Find the student by email
+    const student = await User.findOne({
+      email: studentEmail,
+      role: "student",
+    });
+    if (!student) {
+      return res
+        .status(404)
+        .json({ message: "Student not found with this email" });
+    }
+
+    // Check if student is already enrolled or has a pending request
+    if (course.studentsEnrolled.includes(student._id)) {
+      return res
+        .status(400)
+        .json({ message: "Student is already enrolled in this course" });
+    }
+
+    if (course.pendingEnrollments.includes(student._id)) {
+      return res
+        .status(400)
+        .json({ message: "Student already has a pending invitation" });
+    }
+
+    // Add student to pending enrollments
+    course.pendingEnrollments.push(student._id);
+    await course.save();
+
+    // Get teacher details
+    const teacher = await User.findById(teacherId).select("name");
+
+    // Create notification for the student
+    await Notification.create({
+      userId: student._id,
+      message: `${teacher.name} has invited you to enroll in the course "${
+        course.title
+      }"${message ? `: "${message}"` : ""}`,
+      type: "enrollment_invitation",
+      courseId: course._id,
+      actionRequired: true,
+      data: {
+        studentId: student._id,
+        teacherId,
+        courseName: course.title,
+        message: message || "",
+      },
+    });
+
+    res.status(200).json({ message: "Invitation sent successfully" });
+  } catch (error) {
+    console.error("Error sending invitation:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Student accepts course invitation
+router.put(
+  "/invitation/accept/:notificationId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { notificationId } = req.params;
+      const { courseId } = req.body;
+      const studentId = req.user.id;
+
+      // Verify student role
+      if (req.user.role !== "student") {
+        return res
+          .status(403)
+          .json({ message: "Only students can accept invitations" });
+      }
+
+      // Find the notification
+      const notification = await Notification.findById(notificationId);
+      if (!notification) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+
+      // Verify notification ownership
+      if (notification.userId.toString() !== studentId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Find the course
+      const course = await Course.findById(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      // Update course enrollment
+      const pendingIndex = course.pendingEnrollments.indexOf(studentId);
+      if (pendingIndex > -1) {
+        course.pendingEnrollments.splice(pendingIndex, 1);
+      }
+
+      if (!course.studentsEnrolled.includes(studentId)) {
+        course.studentsEnrolled.push(studentId);
+      }
+
+      await course.save();
+
+      // Mark notification as read
+      notification.isRead = true;
+      notification.actionRequired = false;
+      await notification.save();
+
+      // Notify teacher
+      const student = await User.findById(studentId).select("name");
+      await Notification.create({
+        userId: course.teacherId,
+        message: `${student.name} has accepted your invitation to enroll in "${course.title}"`,
+        type: "invitation_accepted",
+        courseId: course._id,
+        data: {
+          studentId,
+          teacherId: course.teacherId,
+          courseName: course.title,
+        },
+      });
+
+      res.json({ message: "Enrollment complete!" });
+    } catch (error) {
+      console.error("Error accepting invitation:", error);
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  }
+);
+
+// Student rejects course invitation
+router.put(
+  "/invitation/reject/:notificationId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { notificationId } = req.params;
+      const { courseId } = req.body;
+      const studentId = req.user.id;
+
+      // Verify student role
+      if (req.user.role !== "student") {
+        return res
+          .status(403)
+          .json({ message: "Only students can reject invitations" });
+      }
+
+      // Find the notification
+      const notification = await Notification.findById(notificationId);
+      if (!notification) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+
+      // Verify notification ownership
+      if (notification.userId.toString() !== studentId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Find the course
+      const course = await Course.findById(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      // Remove from pending
+      const pendingIndex = course.pendingEnrollments.indexOf(studentId);
+      if (pendingIndex > -1) {
+        course.pendingEnrollments.splice(pendingIndex, 1);
+        await course.save();
+      }
+
+      // Mark notification as read
+      notification.isRead = true;
+      notification.actionRequired = false;
+      await notification.save();
+
+      // Notify teacher
+      const student = await User.findById(studentId).select("name");
+      await Notification.create({
+        userId: course.teacherId,
+        message: `${student.name} has declined your invitation to enroll in "${course.title}"`,
+        type: "invitation_declined",
+        courseId: course._id,
+        data: {
+          studentId,
+          teacherId: course.teacherId,
+          courseName: course.title,
+        },
+      });
+
+      res.json({ message: "Invitation rejected" });
+    } catch (error) {
+      console.error("Error rejecting invitation:", error);
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  }
+);
+
+// Teacher sends invitations to all available students
+router.post("/invite-all", authMiddleware, async (req, res) => {
+  try {
+    const { courseId, message } = req.body;
+    const teacherId = req.user.id;
+
+    // Verify the teacher role
+    if (req.user.role !== "teacher") {
+      return res
+        .status(403)
+        .json({ message: "Only teachers can send invitations" });
+    }
+
+    // Validate required fields
+    if (!courseId) {
+      return res.status(400).json({ message: "Course ID is required" });
+    }
+
+    // Find the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Verify course ownership
+    if (course.teacherId.toString() !== teacherId) {
+      return res
+        .status(403)
+        .json({ message: "You can only invite students to your own courses" });
+    }
+
+    // Find all students
+    const students = await User.find({ role: "student" });
+    if (!students.length) {
+      return res
+        .status(404)
+        .json({ message: "No students found in the system" });
+    }
+
+    // Get teacher details
+    const teacher = await User.findById(teacherId).select("name");
+
+    // Count of successful invitations
+    let invitationCount = 0;
+
+    // Send invitations to each student
+    for (const student of students) {
+      // Skip if already enrolled or has pending invitation
+      if (
+        course.studentsEnrolled.includes(student._id) ||
+        course.pendingEnrollments.includes(student._id)
+      ) {
+        continue;
+      }
+
+      // Add student to pending enrollments
+      course.pendingEnrollments.push(student._id);
+
+      // Create notification for the student
+      await Notification.create({
+        userId: student._id,
+        message: `${teacher.name} has invited you to enroll in the course "${
+          course.title
+        }"${message ? `: "${message}"` : ""}`,
+        type: "enrollment_invitation",
+        courseId: course._id,
+        actionRequired: true,
+        data: {
+          studentId: student._id,
+          teacherId,
+          courseName: course.title,
+          message: message || "",
+        },
+      });
+
+      invitationCount++;
+    }
+
+    // Save the course with all added pending enrollments
+    await course.save();
+
+    res.status(200).json({
+      message: "Invitations sent successfully",
+      count: invitationCount,
+    });
+  } catch (error) {
+    console.error("Error sending bulk invitations:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 export default router;

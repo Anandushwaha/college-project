@@ -95,6 +95,23 @@ router.put("/read-all", authMiddleware, async (req, res) => {
 });
 
 /**
+ * @route DELETE /api/v1/notifications/clear-all
+ * @desc Clear all notifications for a user
+ */
+router.delete("/clear-all", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await Notification.deleteMany({ userId });
+
+    res.json({ message: "All notifications cleared" });
+  } catch (error) {
+    console.error("Error clearing notifications:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
  * @route DELETE /api/v1/notifications/:id
  * @desc Delete a notification
  */
@@ -118,23 +135,6 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     res.json({ message: "Notification deleted" });
   } catch (error) {
     console.error("Error deleting notification:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/**
- * @route DELETE /api/v1/notifications/clear-all
- * @desc Clear all notifications for a user
- */
-router.delete("/clear-all", authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    await Notification.deleteMany({ userId });
-
-    res.json({ message: "All notifications cleared" });
-  } catch (error) {
-    console.error("Error clearing notifications:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

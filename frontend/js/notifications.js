@@ -219,6 +219,27 @@ document.addEventListener("DOMContentLoaded", function () {
           `;
         }
 
+        // If it's an enrollment invitation for student
+        if (
+          role === "student" &&
+          notification.type === "enrollment_invitation" &&
+          notification.actionRequired
+        ) {
+          // Ensure data exists to avoid undefined errors
+          const courseId = notification.courseId?._id || "";
+
+          actionButtons = `
+            <div class="notification-actions">
+              <button class="action-btn accept-invitation-btn" data-course-id="${courseId}">
+                <i class="fas fa-check"></i> Accept
+              </button>
+              <button class="action-btn reject-invitation-btn" data-course-id="${courseId}">
+                <i class="fas fa-times"></i> Decline
+              </button>
+            </div>
+          `;
+        }
+
         // Format date or use fallback
         let formattedDate = "Recently";
         try {
@@ -322,6 +343,30 @@ document.addEventListener("DOMContentLoaded", function () {
         const courseId = this.dataset.courseId;
 
         rejectEnrollment(notificationId, studentId, courseId, card);
+      });
+    });
+
+    // Student: Accept course invitation
+    document.querySelectorAll(".accept-invitation-btn").forEach((button) => {
+      button.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const card = this.closest(".notification-card");
+        const notificationId = card.dataset.id;
+        const courseId = this.dataset.courseId;
+
+        acceptCourseInvitation(notificationId, courseId, card);
+      });
+    });
+
+    // Student: Reject course invitation
+    document.querySelectorAll(".reject-invitation-btn").forEach((button) => {
+      button.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const card = this.closest(".notification-card");
+        const notificationId = card.dataset.id;
+        const courseId = this.dataset.courseId;
+
+        rejectCourseInvitation(notificationId, courseId, card);
       });
     });
   }
@@ -441,7 +486,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       );
 
-      if (!response.ok) throw new Error("Failed to clear notifications");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to clear notifications");
+      }
 
       // Update UI
       notificationsContainer.innerHTML = `
@@ -452,8 +500,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Update badge count
       updateNotificationBadge(0);
+
+      // Show success toast
+      showToast("All notifications cleared", "success");
+
+      // Close dropdown
+      hideNotificationDropdown();
     } catch (error) {
       console.error("Error clearing notifications:", error);
+      showToast("Failed to clear notifications. Please try again.", "error");
     }
   }
 
@@ -543,5 +598,73 @@ document.addEventListener("DOMContentLoaded", function () {
     if (seconds < 10) return "just now";
 
     return Math.floor(seconds) + " seconds ago";
+  }
+
+  // Student: Accept course invitation
+  async function acceptCourseInvitation(notificationId, courseId, card) {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/v1/courses/invitation/accept/${notificationId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ courseId }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to accept invitation");
+
+      // Show success message
+      showToast("You are now enrolled in this course!", "success");
+
+      // Update UI
+      card.classList.remove("unread");
+      card.querySelector(".notification-actions").innerHTML = `
+        <div class="status-pill status-success">Accepted</div>
+      `;
+
+      // Update badge count
+      getNotificationCount();
+    } catch (error) {
+      console.error("Error accepting course invitation:", error);
+      showToast("Failed to accept invitation", "error");
+    }
+  }
+
+  // Student: Reject course invitation
+  async function rejectCourseInvitation(notificationId, courseId, card) {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/v1/courses/invitation/reject/${notificationId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ courseId }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to reject invitation");
+
+      // Show success message
+      showToast("Invitation declined", "success");
+
+      // Update UI
+      card.classList.remove("unread");
+      card.querySelector(".notification-actions").innerHTML = `
+        <div class="status-pill status-inactive">Declined</div>
+      `;
+
+      // Update badge count
+      getNotificationCount();
+    } catch (error) {
+      console.error("Error rejecting course invitation:", error);
+      showToast("Failed to reject invitation", "error");
+    }
   }
 });

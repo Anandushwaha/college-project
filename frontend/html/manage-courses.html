@@ -19,6 +19,37 @@
         }
       });
     </script>
+    <style>
+      /* Additional styles for enrollment modal */
+      .invitation-type-selector {
+        margin-bottom: 15px;
+      }
+
+      .radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .radio-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-weight: normal;
+      }
+
+      .radio-label input {
+        margin-right: 8px;
+      }
+
+      @media (min-width: 768px) {
+        .radio-group {
+          flex-direction: row;
+          gap: 20px;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="course-management">
@@ -71,16 +102,58 @@
           <button class="close-btn" id="closeEnrollmentModal">
             <i class="fas fa-times"></i>
           </button>
-          <h2>Send Enrollment Request</h2>
-          <textarea
-            id="requestMessage"
-            placeholder="Enter a short message..."
-          ></textarea>
-          <select id="courseSelect">
-            <option value="">Select a Course</option>
-          </select>
-          <button id="sendEnrollmentRequest">
-            <i class="fas fa-paper-plane"></i> Send Request
+          <h2>Send Course Enrollment Invitation</h2>
+
+          <div class="form-group">
+            <label for="courseSelect">Select Course</label>
+            <select id="courseSelect" class="form-control">
+              <option value="">Select a Course</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <div class="invitation-type-selector">
+              <label>Invitation Type:</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input
+                    type="radio"
+                    name="invitationType"
+                    value="single"
+                    checked
+                  />
+                  Invite Single Student
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="invitationType" value="all" />
+                  Invite All Available Students
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" id="singleStudentGroup">
+            <label for="studentEmail">Student Email</label>
+            <input
+              type="email"
+              id="studentEmail"
+              class="form-control"
+              placeholder="Enter student email"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="requestMessage">Message (Optional)</label>
+            <textarea
+              id="requestMessage"
+              class="form-control"
+              placeholder="Enter a personal message to include with the invitation..."
+            ></textarea>
+          </div>
+
+          <button id="sendEnrollmentRequest" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Send Invitation
           </button>
         </div>
       </div>
@@ -370,19 +443,40 @@
         const courseSelect = document.getElementById("courseSelect");
         const sendRequestBtn = document.getElementById("sendEnrollmentRequest");
         const requestMessage = document.getElementById("requestMessage");
+        const studentEmail = document.getElementById("studentEmail");
+        const singleStudentGroup =
+          document.getElementById("singleStudentGroup");
+        const invitationTypeRadios =
+          document.getElementsByName("invitationType");
 
-        // Fetch available courses for enrollment
-        async function fetchAvailableCourses() {
+        // Toggle student email input based on invitation type
+        invitationTypeRadios.forEach((radio) => {
+          radio.addEventListener("change", function () {
+            if (this.value === "single") {
+              singleStudentGroup.style.display = "block";
+            } else {
+              singleStudentGroup.style.display = "none";
+            }
+          });
+        });
+
+        // Fetch courses created by the teacher
+        async function fetchTeacherCourses() {
           try {
             const token = localStorage.getItem("accessToken");
             const response = await fetch(
-              "http://localhost:5000/api/v1/courses/available",
+              "http://localhost:5000/api/v1/courses/teacher",
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
               }
             );
+
+            if (!response.ok) {
+              throw new Error("Failed to fetch courses");
+            }
+
             const courses = await response.json();
 
             // Clear previous options
@@ -397,14 +491,21 @@
               courseSelect.appendChild(option);
             });
           } catch (error) {
-            console.error("Error fetching available courses:", error);
+            console.error("Error fetching teacher courses:", error);
+            showErrorMessage("Failed to load your courses. Please try again.");
           }
         }
 
         // Open enrollment modal
         openModalBtn.addEventListener("click", () => {
           enrollmentModal.classList.remove("hidden");
-          fetchAvailableCourses();
+          fetchTeacherCourses();
+          // Reset form
+          studentEmail.value = "";
+          requestMessage.value = "";
+          // Reset radio buttons
+          invitationTypeRadios[0].checked = true;
+          singleStudentGroup.style.display = "block";
         });
 
         // Close enrollment modal
@@ -412,20 +513,43 @@
           enrollmentModal.classList.add("hidden");
         });
 
-        // Send enrollment request
+        // Send enrollment invitation
         sendRequestBtn.addEventListener("click", async () => {
           const courseId = courseSelect.value;
-          const message = requestMessage.value;
+          const message = requestMessage.value.trim();
+          const invitationType = document.querySelector(
+            'input[name="invitationType"]:checked'
+          ).value;
 
           if (!courseId) {
-            alert("Please select a course");
+            showErrorMessage("Please select a course");
             return;
           }
+
+          if (invitationType === "single") {
+            const email = studentEmail.value.trim();
+            if (!email) {
+              showErrorMessage("Please enter student email");
+              return;
+            }
+
+            await sendSingleInvitation(courseId, email, message);
+          } else {
+            await sendInvitationToAllStudents(courseId, message);
+          }
+        });
+
+        // Function to send invitation to a single student
+        async function sendSingleInvitation(courseId, email, message) {
+          // Show loading state
+          sendRequestBtn.disabled = true;
+          sendRequestBtn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Sending...';
 
           try {
             const token = localStorage.getItem("accessToken");
             const response = await fetch(
-              "http://localhost:5000/api/v1/enrollment-requests/create",
+              "http://localhost:5000/api/v1/courses/invite",
               {
                 method: "POST",
                 headers: {
@@ -434,7 +558,8 @@
                 },
                 body: JSON.stringify({
                   courseId,
-                  message,
+                  studentEmail: email,
+                  message: message || undefined,
                 }),
               }
             );
@@ -442,16 +567,83 @@
             const data = await response.json();
 
             if (response.ok) {
-              alert("Enrollment request sent successfully!");
+              showSuccessMessage("Invitation sent successfully!");
               enrollmentModal.classList.add("hidden");
             } else {
-              alert(data.message || "Failed to send enrollment request");
+              showErrorMessage(data.message || "Failed to send invitation");
             }
           } catch (error) {
-            console.error("Error sending enrollment request:", error);
-            alert("An error occurred. Please try again.");
+            console.error("Error sending enrollment invitation:", error);
+            showErrorMessage("An error occurred. Please try again.");
+          } finally {
+            // Reset button state
+            sendRequestBtn.disabled = false;
+            sendRequestBtn.innerHTML =
+              '<i class="fas fa-paper-plane"></i> Send Invitation';
           }
-        });
+        }
+
+        // Function to send invitations to all available students
+        async function sendInvitationToAllStudents(courseId, message) {
+          // Show loading state
+          sendRequestBtn.disabled = true;
+          sendRequestBtn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Sending invitations to all students...';
+
+          try {
+            const token = localStorage.getItem("accessToken");
+            const response = await fetch(
+              "http://localhost:5000/api/v1/courses/invite-all",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  courseId,
+                  message: message || undefined,
+                }),
+              }
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+              showSuccessMessage(`Invitations sent to ${data.count} students!`);
+              enrollmentModal.classList.add("hidden");
+            } else {
+              showErrorMessage(data.message || "Failed to send invitations");
+            }
+          } catch (error) {
+            console.error("Error sending bulk enrollment invitations:", error);
+            showErrorMessage("An error occurred. Please try again.");
+          } finally {
+            // Reset button state
+            sendRequestBtn.disabled = false;
+            sendRequestBtn.innerHTML =
+              '<i class="fas fa-paper-plane"></i> Send Invitation';
+          }
+        }
+
+        // Helper functions for showing messages
+        function showSuccessMessage(message) {
+          const successMessage = document.getElementById("successMessage");
+          successMessage.textContent = message;
+          successMessage.style.display = "block";
+          setTimeout(() => {
+            successMessage.style.display = "none";
+          }, 3000);
+        }
+
+        function showErrorMessage(message) {
+          const errorMessage = document.getElementById("errorMessage");
+          errorMessage.textContent = message;
+          errorMessage.style.display = "block";
+          setTimeout(() => {
+            errorMessage.style.display = "none";
+          }, 3000);
+        }
       });
     </script>
   </body>
